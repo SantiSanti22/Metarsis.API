@@ -1,0 +1,72 @@
+﻿/* 1. Fondo completamente BLANCO para TODAS las cajas de código (Response body, Request URL, Curl) */
+.swagger-ui pre,
+.swagger-ui .microlight,
+.swagger-ui .highlight-code {
+    background-color: #FFFFFF !important;
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 8px !important;
+}
+
+    /* 2. Forzar que todo el texto dentro de las cajas sea oscuro para un contraste perfecto */
+    .swagger-ui pre,
+    .swagger-ui .microlight,
+    .swagger-ui code,
+    .swagger-ui .microlight span {
+        color: #0F172A !important;
+        text-shadow: none !important;
+        font-weight: 500 !important;
+    }
+
+/* 3. Cambiar la barra superior (Top bar) a un color corporativo elegante */
+.swagger-ui .topbar {
+    background-color: #1E293B !important;
+    border-bottom: 3px solid #3B82F6 !important;
+}
+
+/* 4. Aclarar el fondo general de la página para que las tarjetas resalten */
+body {
+    background-color: #F1F5F9 !important;
+}
+
+/* 5. Asegurar que los encabezados de las tablas se lean claramente */
+.swagger-ui table thead tr th,
+.swagger-ui table tbody tr td,
+.swagger-ui .response-col_headers {
+    color: #333333 !important;
+}
+
+/* --- NUEVAS MEJORAS DE DISEÑO --- */
+
+/* 6. Ocultar el logo de Swagger de la barra superior */
+.swagger-ui .topbar-wrapper img {
+    display: none !important;
+}
+
+/* 7. Ocultar enlace técnico del JSON y etiquetas de versión (OAS 3.0, etc.) */
+.swagger-ui .info .base-url,
+.swagger-ui .info .title small {
+    display: none !important;
+}
+
+/* 8. Estilo de tarjetas modernas para los bloques GET y POST */
+.swagger-ui .opblock {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    border: none !important;
+    margin-bottom: 15px !important;
+}
+
+    /* Bordes redondos en la cabecera de cada bloque de operación */
+    .swagger-ui .opblock .opblock-summary {
+        border-radius: 12px !important;
+    }
+
+/* 9. Tipografía más moderna y limpia para toda la interfaz */
+.swagger-ui,
+.swagger-ui .info .title,
+.swagger-ui .opblock-summary-operation-id,
+.swagger-ui .opblock-summary-path,
+.swagger-ui .opblock-summary-description {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+}

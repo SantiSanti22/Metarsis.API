@@ -1,0 +1,381 @@
+﻿@model IEnumerable<Metarsis.Api.Models.SolicitudEncuesta>
+@{
+    ViewData["Title"] = "Gestión de Encuestas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* ENCABEZADOS DE PÁGINA */
+    .page-header-title {
+        color: #0B72B9;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+    [data-bs-theme="dark"] .page-header-title {
+        color: #38BDF8 !important;
+    }
+
+    .page-header-sub {
+        color: #64748B;
+        font-size: 0.88rem;
+    }
+    [data-bs-theme="dark"] .page-header-sub {
+        color: #94A3B8 !important;
+    }
+
+    /* BARRA DE BÚSQUEDA */
+    .search-box-wrap {
+        width: 100%;
+        max-width: 290px;
+    }
+
+    .search-box-wrap .input-group-text {
+        background-color: var(--av-surface) !important;
+        border-color: var(--av-border) !important;
+        color: var(--av-text-muted) !important;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .search-box-wrap .form-control {
+        background-color: var(--av-surface) !important;
+        border-color: var(--av-border) !important;
+        color: var(--av-text-main) !important;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.86rem;
+    }
+
+    .search-box-wrap .form-control:focus {
+        border-color: var(--av-primary) !important;
+        box-shadow: 0 0 0 2px rgba(24, 105, 179, 0.15) !important;
+    }
+
+    /* CONTENEDOR DE TABLA */
+    .encuestas-card {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background: var(--av-surface);
+        overflow: hidden;
+    }
+
+    /* ENCABEZADOS DE TABLA */
+    .encuestas-table thead tr th {
+        background-color: var(--av-pill-bg) !important;
+        border-bottom: 1px solid var(--av-border) !important;
+        color: var(--av-text-muted) !important;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 14px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .encuestas-table tbody tr {
+        border-bottom: 1px solid var(--av-border);
+        transition: background-color 0.15s ease;
+    }
+
+    .encuestas-table tbody tr:hover {
+        background-color: rgba(24, 105, 179, 0.02);
+    }
+    [data-bs-theme="dark"] .encuestas-table tbody tr:hover {
+        background-color: rgba(56, 189, 248, 0.03);
+    }
+
+    .encuestas-table tbody tr td {
+        padding: 12px 14px;
+        font-size: 0.86rem;
+    }
+
+    /* BADGE ID */
+    .badge-encuesta-id {
+        background-color: var(--av-pill-bg);
+        color: var(--av-text-muted);
+        border: 1px solid var(--av-border);
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 3px 6px;
+    }
+
+    /* BADGES DE ESTATUS (ESTILO DASHBOARD CON PUNTO INDICADOR) */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        letter-spacing: 0.2px;
+    }
+
+    .status-badge .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+    }
+
+    .status-badge.in-progress {
+        background-color: rgba(245, 158, 11, 0.12);
+        color: #D97706;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .status-badge.in-progress .dot {
+        background-color: #F59E0B;
+        box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
+
+    .status-badge.finished {
+        background-color: rgba(16, 185, 129, 0.12);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .status-badge.finished .dot {
+        background-color: #10B981;
+    }
+
+    [data-bs-theme="dark"] .status-badge.in-progress {
+        background-color: rgba(245, 158, 11, 0.18);
+        color: #FCD34D;
+        border-color: rgba(245, 158, 11, 0.35);
+    }
+    [data-bs-theme="dark"] .status-badge.finished {
+        background-color: rgba(16, 185, 129, 0.18);
+        color: #6EE7B7;
+        border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    /* BOTONES DE ACCIÓN COMPACTOS Y UNIFICADOS */
+    .btn-action-group {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .btn-action-encuesta {
+        background-color: var(--av-pill-bg);
+        color: var(--av-primary);
+        border: 1px solid var(--av-border);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .btn-action-encuesta:hover {
+        background-color: var(--av-primary);
+        color: #FFFFFF !important;
+        border-color: var(--av-primary);
+        box-shadow: 0 2px 6px rgba(24, 105, 179, 0.25);
+    }
+
+    .btn-action-reporte {
+        background-color: var(--av-primary);
+        color: #FFFFFF;
+        border: 1px solid var(--av-primary);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .btn-action-reporte:hover {
+        opacity: 0.92;
+        color: #FFFFFF !important;
+        box-shadow: 0 2px 6px rgba(24, 105, 179, 0.3);
+    }
+
+    .btn-action-monitorear {
+        background-color: rgba(16, 185, 129, 0.12);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .btn-action-monitorear:hover {
+        background-color: #10B981;
+        color: #FFFFFF !important;
+        border-color: #10B981;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+    }
+
+    [data-bs-theme="dark"] .btn-action-monitorear {
+        background-color: rgba(16, 185, 129, 0.18);
+        color: #6EE7B7;
+        border-color: rgba(16, 185, 129, 0.35);
+    }
+    [data-bs-theme="dark"] .btn-action-monitorear:hover {
+        background-color: #10B981;
+        color: #FFFFFF !important;
+    }
+</style>
+
+<div class="container-fluid p-0">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h4 class="page-header-title mb-1">
+                <i class="fa-solid fa-clipboard-list me-2"></i>Gestión de Encuestas en curso
+            </h4>
+            <p class="page-header-sub mb-0">Supervisa el avance, revisión y reportes generados para cada empresa cliente.</p>
+        </div>
+
+        <div class="search-box-wrap">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fa-solid fa-magnifying-glass fa-sm"></i>
+                </span>
+                <input type="text" id="inputBuscarEncuesta" class="form-control" 
+                       placeholder="Buscar empresa o contacto..." />
+            </div>
+        </div>
+    </div>
+
+    <div class="card encuestas-card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table encuestas-table align-middle mb-0 w-100" id="tablaEncuestas">
+                    <thead>
+                        <tr>
+                            <th class="text-center ps-3" style="width: 5%;">ID</th>
+                            <th class="text-start" style="width: 25%;">Empresa</th>
+                            <th class="text-start" style="width: 20%;">Contacto</th>
+                            <th class="text-center" style="width: 12%;">Empleados</th>
+                            <th class="text-center" style="width: 16%;">Estatus</th>
+                            <th class="text-end pe-4" style="width: 22%;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var solicitud in Model)
+                            {
+                                <tr class="fila-encuesta">
+                                    <!-- ID -->
+                                    <td class="text-center ps-3">
+                                        <span class="badge-encuesta-id">
+                                            #@solicitud.SolicitudID
+                                        </span>
+                                    </td>
+
+                                    <!-- Empresa -->
+                                    <td class="text-start columna-empresa" style="color: var(--av-text-main);">
+                                        @(solicitud.Empresa?.NombreEmpresa ?? "N/A")
+                                    </td>
+
+                                    <!-- Contacto -->
+                                    <td class="text-start text-secondary columna-contacto">
+                                        @(solicitud.Empresa?.NombreContacto ?? "N/A")
+                                    </td>
+
+                                    <!-- Empleados -->
+                                    <td class="text-center text-secondary">
+                                        @solicitud.NumeroEmpleados
+                                    </td>
+
+                                    <!-- Estatus con punto indicador -->
+                                    <td class="text-center">
+                                        @if (solicitud.Estatus == "Finalizada")
+                                        {
+                                            <span class="status-badge finished">
+                                                <span class="dot"></span>
+                                                <span>Completada</span>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge in-progress">
+                                                <span class="dot"></span>
+                                                <span>En curso</span>
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <!-- Acciones Operativas -->
+                                    <td class="text-end pe-4">
+                                        <div class="btn-action-group">
+                                            <!-- Botón Encuesta -->
+                                            <a href="/Panel/RevisarEncuesta?empresaId=@solicitud.EmpresaID" 
+                                               class="btn-action-encuesta" 
+                                               title="Revisar estructura de la encuesta">
+                                                <i class="fa-solid fa-list-check fa-xs"></i>
+                                                <span>Encuesta</span>
+                                            </a>
+                                            
+                                            <!-- Botón secundario dinámico -->
+                                            @if (solicitud.Estatus == "Finalizada")
+                                            {
+                                                <a href="/Panel/PrevisualizarReporte?empresaId=@solicitud.EmpresaID" 
+                                                   class="btn-action-reporte" 
+                                                   title="Ver y editar reporte">
+                                                    <i class="fa-solid fa-file-lines fa-xs"></i>
+                                                    <span>Ver Reporte</span>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a href="/Panel/MonitorearEncuesta?empresaId=@solicitud.EmpresaID" 
+                                                   class="btn-action-monitorear" 
+                                                   title="Ver progreso de respuestas en vivo">
+                                                    <i class="fa-solid fa-chart-line fa-xs"></i>
+                                                    <span>Monitorear</span>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="fa-regular fa-folder-open fa-2x mb-2 d-block opacity-50"></i>
+                                    No hay encuestas activas ni finalizadas en este momento.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.getElementById('inputBuscarEncuesta')?.addEventListener('input', function () {
+        const query = this.value.toLowerCase().trim();
+        const filas = document.querySelectorAll('.fila-encuesta');
+
+        filas.forEach(fila => {
+            const empresa = fila.querySelector('.columna-empresa')?.textContent.toLowerCase() || '';
+            const contacto = fila.querySelector('.columna-contacto')?.textContent.toLowerCase() || '';
+
+            if (empresa.includes(query) || contacto.includes(query)) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    });
+</script>
+}

@@ -1,0 +1,514 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    
+    <script>
+        (function () {
+            const tema = localStorage.getItem('avenzo_theme') || 
+                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', tema);
+        })();
+    </script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Avenzo - @(ViewData["Title"] ?? "Panel de Administración")</title>
+    <link rel="icon" type="image/x-icon" href="~/images/Logotipo.ico" />
+    <link rel="shortcut icon" type="image/x-icon" href="~/images/Logotipo.ico" />
+    
+    <!-- LIBRERÍAS DE ESTILOS Y FUENTES EXTERNAS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        
+        /* VARIABLES DE DISEÑO */
+        :root {
+
+            /* Colores principales */
+            --av-primary: #1869B3;
+            --av-primary-hover: #135591;
+            --av-accent: #3FA9F5;
+            
+            /* Fondos y Superficies - Modo Claro */
+            --av-bg-body: #F8FAFC;
+            --av-surface: #FFFFFF;
+            --av-border: #E2E8F0;
+            --av-pill-bg: #F8FAFC;
+            
+            /* Tipografía y Textos */
+            --av-text-main: #0F172A;
+            --av-text-muted: #64748B;
+            --av-text-disabled: #94A3B8;
+
+            /* Sidebar */
+            --av-sidebar-active-bg: #EDF6FD;
+            --av-sidebar-active-color: #1869B3;
+            --av-sidebar-hover-bg: #F1F5F9;
+        }
+
+        /* 🌙 SOBREESCRITURAS DE VARIABLES PARA MODO OSCURO */
+        [data-bs-theme="dark"] {
+            --av-primary: #38BDF8;
+            --av-primary-hover: #0284C7;
+            --av-accent: #68C2F8;
+            
+            /* Fondos y Superficies - Modo Oscuro */
+            --av-bg-body: #0B132B;
+            --av-surface: #111C38;
+            --av-border: #1E293B;
+            --av-pill-bg: #0F172A;
+            
+            /* Tipografía y Textos */
+            --av-text-main: #F8FAFC;
+            --av-text-muted: #94A3B8;
+            --av-text-disabled: #64748B;
+
+            /* Sidebar */
+            --av-sidebar-active-bg: #1E2E4E;
+            --av-sidebar-active-color: #38BDF8;
+            --av-sidebar-hover-bg: #1E293B;
+        }
+
+        /* ESTILOS GLOBALES BASE */
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--av-bg-body) !important;
+            color: var(--av-text-main) !important;
+            font-size: 0.9rem;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        h1, h2, h3, h4, h5, h6, .fw-bold {
+            color: var(--av-text-main);
+        }
+        .text-secondary, .text-muted, small {
+            color: var(--av-text-muted) !important;
+        }
+
+        /* BARRA LATERAL (SIDEBAR) */
+        .sidebar {
+            min-height: 100vh;
+            background-color: var(--av-surface);
+            border-right: 1px solid var(--av-border);
+            width: 220px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            transition: background-color 0.25s ease, border-color 0.25s ease;
+        }
+
+        .logo-container {
+            padding: 18px 15px;
+            text-align: center;
+            border-bottom: 1px solid var(--av-border);
+            transition: border-color 0.25s ease;
+        }
+
+        .logo-container img {
+            max-width: 88%;
+            height: auto;
+        }
+
+        /* Control de visibilidad de Logotipos (Claro / Oscuro) */
+        .logo-light { display: inline-block; }
+        .logo-dark { display: none; }
+
+        [data-bs-theme="dark"] .logo-light { display: none !important; }
+        [data-bs-theme="dark"] .logo-dark { display: inline-block !important; }
+
+        /* Enlaces del Sidebar */
+        .sidebar a {
+            color: var(--av-text-muted);
+            text-decoration: none;
+            padding: 11px 18px;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            font-size: 0.88rem;
+            transition: all 0.2s ease-in-out;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar a i {
+            width: 22px;
+            text-align: center;
+            font-size: 0.98rem;
+            margin-right: 12px;
+            color: var(--av-text-disabled);
+            transition: color 0.2s ease;
+        }
+
+        .sidebar a:hover {
+            background-color: var(--av-sidebar-hover-bg);
+            color: var(--av-primary);
+        }
+
+        .sidebar a:hover i {
+            color: var(--av-accent);
+        }
+
+        .sidebar a.active {
+            background-color: var(--av-sidebar-active-bg);
+            color: var(--av-sidebar-active-color);
+            font-weight: 600;
+            border-left: 4px solid var(--av-sidebar-active-color);
+        }
+
+        .sidebar a.active i {
+            color: var(--av-sidebar-active-color);
+        }
+
+        /* BARRA SUPERIOR DE NAVEGACIÓN */
+        .navbar-admin {
+            background-color: var(--av-surface);
+            border-bottom: 1px solid var(--av-border);
+            margin-left: 220px;
+            padding: 10px 28px;
+            min-height: 60px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            transition: background-color 0.25s ease, border-color 0.25s ease;
+        }
+
+        .navbar-breadcrumb-title {
+            color: var(--av-text-main) !important;
+            font-size: 0.88rem;
+            letter-spacing: -0.2px;
+        }
+
+        .navbar-breadcrumb-icon {
+            color: var(--av-primary) !important;
+        }
+
+        #navbarLiveDate {
+            color: var(--av-text-muted) !important;
+            font-size: 0.8rem;
+            font-weight: 400;
+        }
+
+        /* CÁPSULA DE PERFIL Y CONTROL DE ACCIONES */
+        .control-pill-bar {
+            background-color: var(--av-pill-bg);
+            border: 1px solid var(--av-border);
+            border-radius: 40px;
+            padding: 4px 8px 4px 6px;
+            transition: all 0.2s ease;
+        }
+
+        .control-pill-bar:hover {
+            border-color: var(--av-text-disabled);
+        }
+
+        /* Conmutador de tema circular */
+        .btn-pill-theme {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--av-surface);
+            border: 1px solid var(--av-border);
+            color: var(--av-text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.78rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-pill-theme:hover {
+            color: var(--av-primary);
+            border-color: var(--av-accent);
+            transform: scale(1.05);
+        }
+
+        [data-bs-theme="dark"] .btn-pill-theme {
+            color: #FACC15;
+        }
+
+        /* Avatar del Usuario */
+        .user-pill-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--av-primary) 0%, #0369A1 100%);
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 0.82rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(24, 105, 179, 0.25);
+        }
+
+        /* Nombre del Usuario */
+        .user-pill-name {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--av-text-main);
+            line-height: 1.15;
+        }
+
+        /* Rol tipográfico estilizado */
+        .user-pill-role-sub {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            line-height: 1;
+            margin-top: 2px;
+        }
+
+        .role-admin-color {
+            color: var(--av-primary) !important;
+        }
+
+        .role-consultor-color {
+            color: #8B5CF6 !important;
+        }
+
+        /* Botón de salida integrado */
+        .btn-pill-logout {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            color: #EF4444;
+            background-color: transparent;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 0.82rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-pill-logout:hover {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #DC2626;
+            transform: scale(1.08);
+        }
+
+        /* CONTENIDO PRINCIPAL */
+        .main-content {
+            margin-left: 220px;
+            padding: 28px;
+        }
+
+        /* Elementos reutilizables en vistas hijas */
+        .card {
+            background-color: var(--av-surface) !important;
+            border-color: var(--av-border) !important;
+        }
+
+        .table {
+            color: var(--av-text-main) !important;
+        }
+
+        [data-bs-theme="dark"] .table thead tr th {
+            background-color: #0F172A !important;
+            border-bottom-color: var(--av-border) !important;
+            color: var(--av-text-muted) !important;
+        }
+
+        [data-bs-theme="dark"] .table tbody tr {
+            border-bottom-color: var(--av-border) !important;
+        }
+
+        [data-bs-theme="dark"] .table tbody tr td {
+            color: #CBD5E1 !important;
+        }
+
+        [data-bs-theme="dark"] .table tbody tr td.fw-bold {
+            color: #FFFFFF !important;
+        }
+
+        /* Modales y Notificaciones */
+        [data-bs-theme="dark"] .modal-content {
+            background-color: var(--av-surface) !important;
+            color: var(--av-text-main) !important;
+            border-color: var(--av-border) !important;
+        }
+
+        [data-bs-theme="dark"] .swal2-popup.swal2-toast {
+            background-color: var(--av-surface) !important;
+            color: var(--av-text-main) !important;
+            border: 1px solid var(--av-border) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. BARRA LATERAL DE NAVEGACIÓN (SIDEBAR) -->
+    <aside class="sidebar d-flex flex-column justify-content-between">
+        <div>
+            <!-- Contenedor del Logo con soporte Claro/Oscuro -->
+            <div class="logo-container">
+                <a href="/Panel/Index">
+                    <img src="~/images/Avenzo_Logo_Header.png" alt="Avenzo Logo" class="logo-light" />
+                    <img src="~/images/Avenzo_Logo_Dark.png" alt="Avenzo Logo" class="logo-dark" />
+                </a>
+            </div>
+
+            <!-- Navegación Homologada -->
+            <nav class="mt-2">
+                <a href="/Panel/Index" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="/Panel/Solicitudes" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Solicitudes" ? "active" : "")">
+                    <i class="fa-solid fa-inbox"></i>
+                    <span>Solicitudes</span>
+                </a>
+
+                <a href="/Panel/Encuestas" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Encuestas" || ViewContext.RouteData.Values["Action"]?.ToString() == "RevisarEncuesta" ? "active" : "")">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>Encuestas</span>
+                </a>
+                
+                <a href="/Panel/GestionTAT" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "GestionTAT" ? "active" : "")">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>Prueba TAT</span>
+                </a>
+                
+                <a href="/Panel/EmpresasClientes" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "EmpresasClientes" ? "active" : "")">
+                    <i class="fa-solid fa-building"></i>
+                    <span>Empresas</span>
+                </a>
+                
+                <a href="/Panel/Reportes" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Reportes" ? "active" : "")">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reportes y Diag.</span>
+                </a>
+
+                @* 🟢 GESTIÓN DE EQUIPO: Solo visible para usuarios con rol Admin *@
+                @if (User.IsInRole("Admin"))
+                {
+                    <a href="/Panel/Usuarios" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Usuarios" ? "active" : "")">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span>Equipo</span>
+                    </a>
+                }
+            </nav>
+        </div>
+    </aside>
+
+    <!-- 2. BARRA DE NAVEGACIÓN SUPERIOR (TOP NAVBAR) -->
+    <header class="navbar-admin d-flex justify-content-between align-items-center">
+        <!-- 1. Lado Izquierdo: Módulo activo y fecha estilizada (Sin redundancias) -->
+        <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-layer-group navbar-breadcrumb-icon opacity-75 fa-sm"></i>
+            <span class="fw-semibold navbar-breadcrumb-title">
+                @(ViewData["Title"] ?? "Panel Principal")
+            </span>
+            <span class="text-muted opacity-50 mx-1">/</span>
+            <span id="navbarLiveDate">
+                Cargando fecha...
+            </span>
+        </div>
+
+        @{
+            string rolUsuario = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Consultor";
+            bool esAdmin = rolUsuario == "Admin" || rolUsuario == "Administrador";
+            string nombreCompleto = User.Identity?.Name ?? "Usuario";
+            string inicial = !string.IsNullOrWhiteSpace(nombreCompleto) ? nombreCompleto.Substring(0, 1).ToUpper() : "U";
+        }
+
+        <!-- 2. Lado Derecho: Cápsula homogénea con rol integrado -->
+        <div class="control-pill-bar d-flex align-items-center gap-2">
+            <!-- Botón Conmutador de Modo Oscuro / Claro -->
+            <button type="button" 
+                    id="themeToggleBtn" 
+                    class="btn-pill-theme" 
+                    title="Alternar Modo Oscuro / Claro"
+                    aria-label="Alternar tema">
+                <i id="themeToggleIcon" class="fa-solid fa-moon"></i>
+            </button>
+
+            <div class="vr opacity-25 mx-1" style="height: 18px;"></div>
+
+            <!-- Avatar del Usuario -->
+            <div class="user-pill-avatar">
+                @inicial
+            </div>
+
+            <!-- Nombre y Rol apilados -->
+            <div class="d-flex flex-column text-start me-1">
+                <span class="user-pill-name">@nombreCompleto</span>
+                <span class="user-pill-role-sub @(esAdmin ? "role-admin-color" : "role-consultor-color")">
+                    <i class="fa-solid @(esAdmin ? "fa-shield-halved" : "fa-briefcase") me-1" style="font-size: 0.65rem;"></i>
+                    @(esAdmin ? "Administrador" : "Consultor")
+                </span>
+            </div>
+
+            <div class="vr opacity-25 mx-1" style="height: 18px;"></div>
+
+            <!-- Botón Salir Directo -->
+            <a href="/Usuario/Salir" class="btn-pill-logout" title="Cerrar Sesión">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- 3. CONTENEDOR DINÁMICO DE LAS VISTAS HIJAS -->
+    <main class="main-content">
+        @RenderBody()
+    </main>
+
+    <!-- DEPENDENCIAS JAVASCRIPT DE TERCEROS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- LÓGICA DE GESTIÓN DE TEMA Y FECHA DINÁMICA -->
+    <script>
+        (function () {
+            // 1. Sincronizar fecha contextual en Navbar
+            const dateElem = document.getElementById('navbarLiveDate');
+            if (dateElem) {
+                const opciones = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+                const fecha = new Date().toLocaleDateString('es-ES', opciones);
+                dateElem.textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+            }
+
+            // 2. Control de Tema Claro / Oscuro
+            const themeBtn = document.getElementById('themeToggleBtn');
+            const themeIcon = document.getElementById('themeToggleIcon');
+            const htmlElement = document.documentElement;
+
+            const temaActual = htmlElement.getAttribute('data-bs-theme') || 'light';
+            actualizarIcono(temaActual);
+
+            if (themeBtn) {
+                themeBtn.addEventListener('click', () => {
+                    const actual = htmlElement.getAttribute('data-bs-theme') || 'light';
+                    const nuevoTema = actual === 'dark' ? 'light' : 'dark';
+                    
+                    htmlElement.setAttribute('data-bs-theme', nuevoTema);
+                    localStorage.setItem('avenzo_theme', nuevoTema);
+                    actualizarIcono(nuevoTema);
+                });
+            }
+
+            function actualizarIcono(tema) {
+                if (!themeIcon || !themeBtn) return;
+                if (tema === 'dark') {
+                    themeIcon.className = 'fa-solid fa-sun';
+                    themeBtn.title = "Cambiar a Modo Claro";
+                } else {
+                    themeIcon.className = 'fa-solid fa-moon';
+                    themeBtn.title = "Cambiar a Modo Oscuro";
+                }
+            }
+        })();
+    </script>
+    
+    <!-- Renderizador de Scripts para Vistas Hijas -->
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

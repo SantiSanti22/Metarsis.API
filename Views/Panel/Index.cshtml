@@ -1,0 +1,537 @@
+﻿@model IEnumerable<Metarsis.Api.Models.Encuesta>
+@{
+    ViewData["Title"] = "Dashboard Ejecutivo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    int totalEncuestasPlataforma = (ViewBag.EncuestasActivas ?? 0) + (ViewBag.EncuestasFinalizadas ?? 0);
+}
+
+<style>
+    /* TARJETAS DE MÉTRICAS (KPIS) */
+    .kpi-card-avenzo {
+        border-radius: 16px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        border: 1px solid var(--av-border);
+        background: var(--av-surface);
+    }
+
+    .kpi-card-avenzo:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.08) !important;
+        border-color: var(--av-text-disabled);
+    }
+
+    /* Iconos con degradados vivos */
+    .kpi-icon-wrap {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .kpi-icon-blue {
+        background: rgba(24, 105, 179, 0.12);
+        color: var(--av-primary);
+    }
+
+    .kpi-icon-amber {
+        background: rgba(245, 158, 11, 0.15);
+        color: #D97706;
+    }
+
+    .kpi-icon-emerald {
+        background: rgba(16, 185, 129, 0.15);
+        color: #059669;
+    }
+
+    .kpi-icon-slate {
+        background: rgba(100, 116, 139, 0.12);
+        color: var(--av-text-muted);
+    }
+
+    /* Homologación estética de textos y enlaces inferiores en KPI */
+    .kpi-footer-text, .kpi-footer-link {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: var(--av-text-muted) !important;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: color 0.2s ease, gap 0.2s ease;
+    }
+
+    .kpi-footer-link:hover {
+        color: var(--av-primary) !important;
+        gap: 7px;
+    }
+
+    /* CONTENEDOR DE GRÁFICAS Y TABLAS */
+    .chart-box-card {
+        border-radius: 16px;
+        border: 1px solid var(--av-border);
+        background: var(--av-surface);
+    }
+
+    .badge-realtime {
+        font-size: 0.72rem;
+        background-color: var(--av-pill-bg);
+        color: var(--av-primary);
+        border: 1px solid var(--av-border);
+        padding: 4px 10px;
+        border-radius: 20px;
+    }
+
+    /* NUEVO DISEÑO PARA LA COLUMNA ESTATUS */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        letter-spacing: 0.2px;
+    }
+
+    .status-badge .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+    }
+
+    .status-badge.in-progress {
+        background-color: rgba(245, 158, 11, 0.12);
+        color: #D97706;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .status-badge.in-progress .dot {
+        background-color: #F59E0B;
+        box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
+
+    .status-badge.finished {
+        background-color: rgba(16, 185, 129, 0.12);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .status-badge.finished .dot {
+        background-color: #10B981;
+    }
+
+    /* BOTÓN ERGONÓMICO DE ACCIÓN Y MONITOREO */
+    .btn-action-view {
+        background-color: var(--av-pill-bg);
+        color: var(--av-primary);
+        border: 1px solid var(--av-border);
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-action-view:hover {
+        background-color: var(--av-primary);
+        color: #FFFFFF !important;
+        border-color: var(--av-primary);
+        box-shadow: 0 2px 8px rgba(24, 105, 179, 0.25);
+    }
+
+    /* TABLA LIMPIA Y MODERNA */
+    .table-clean thead tr th {
+        background-color: var(--av-pill-bg) !important;
+        border-bottom: 1px solid var(--av-border) !important;
+        color: var(--av-text-muted) !important;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 16px;
+    }
+
+    .table-clean tbody tr {
+        border-bottom: 1px solid var(--av-border);
+        transition: background-color 0.15s ease;
+    }
+
+    .table-clean tbody tr:hover {
+        background-color: rgba(24, 105, 179, 0.02);
+    }
+
+    .table-clean tbody tr td {
+        padding: 14px 16px;
+    }
+</style>
+
+<!-- ENCABEZADO DE PÁGINA -->
+<div class="mb-4">
+    <h4 class="fw-bold mb-1" style="color: var(--av-primary); letter-spacing: -0.3px;">
+        <i class="fa-solid fa-chart-pie me-2"></i>Panel de Control General
+    </h4>
+    <p class="text-secondary small mb-0">Resumen operativo y estadísticas globales del sistema de encuestas y evaluaciones.</p>
+</div>
+
+<!-- TARJETAS DE INDICADORES CLAVE (KPIS) -->
+<div class="row g-3 mb-4">
+    <!-- 1. Pendientes -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-avenzo shadow-sm p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem;">Pendientes</span>
+                    <h2 class="fw-bold my-1" style="font-size: 2rem; color: var(--av-primary);">@ViewBag.SolicitudesPendientesCount</h2>
+                    <a href="/Panel/Solicitudes" class="kpi-footer-link">
+                        <span>Ir a bandeja</span>
+                        <i class="fa-solid fa-arrow-right fa-xs"></i>
+                    </a>
+                </div>
+                <div class="kpi-icon-wrap kpi-icon-blue">
+                    <i class="fa-solid fa-envelope-open-text fa-lg"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. En Curso -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-avenzo shadow-sm p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem;">En Curso</span>
+                    <h2 class="fw-bold my-1 text-warning" style="font-size: 2rem;">@ViewBag.EncuestasActivas</h2>
+                    <a href="/Panel/Encuestas" class="kpi-footer-link">
+                        <span>Ver encuestas</span>
+                        <i class="fa-solid fa-arrow-right fa-xs"></i>
+                    </a>
+                </div>
+                <div class="kpi-icon-wrap kpi-icon-amber">
+                    <i class="fa-solid fa-clock-rotate-left fa-lg"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Respuestas -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-avenzo shadow-sm p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem;">Respuestas</span>
+                    <h2 class="fw-bold my-1 text-success" style="font-size: 2rem;">@ViewBag.TotalRespuestas</h2>
+                    <span class="kpi-footer-text">
+                        <i class="fa-brands fa-whatsapp text-success"></i> Vía WhatsApp
+                    </span>
+                </div>
+                <div class="kpi-icon-wrap kpi-icon-emerald">
+                    <i class="fa-solid fa-comments fa-lg"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Empresas -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-avenzo shadow-sm p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.72rem;">Empresas</span>
+                    <h2 class="fw-bold my-1" style="font-size: 2rem; color: var(--av-text-main);">@ViewBag.TotalEmpresas</h2>
+                    <a href="/Panel/EmpresasClientes" class="kpi-footer-link">
+                        <span>Ver empresas</span>
+                        <i class="fa-solid fa-arrow-right fa-xs"></i>
+                    </a>
+                </div>
+                <div class="kpi-icon-wrap kpi-icon-slate">
+                    <i class="fa-solid fa-building fa-lg"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN DE ANÁLISIS GRÁFICO -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-lg-8">
+        <div class="card chart-box-card shadow-sm p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h6 class="fw-bold mb-0" style="color: var(--av-text-main);">Actividad de Respuestas (Últimos 7 días)</h6>
+                    <small class="text-secondary">Interacciones registradas a través de WhatsApp</small>
+                </div>
+                <span class="badge-realtime d-inline-flex align-items-center gap-1">
+                    <i class="fa-solid fa-circle text-success fa-2xs"></i>
+                    <span>En tiempo real</span>
+                </span>
+            </div>
+            <div style="height: 260px; position: relative;">
+                <canvas id="chartRespuestas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card chart-box-card shadow-sm p-3 h-100">
+            <div class="mb-2">
+                <h6 class="fw-bold mb-0" style="color: var(--av-text-main);">Estatus de Encuestas</h6>
+                <small class="text-secondary">Proporción general en la plataforma</small>
+            </div>
+            <div style="height: 260px; position: relative;" class="d-flex align-items-center justify-content-center">
+                <canvas id="chartEstatus"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LISTADO DE ENCUESTAS RECIENTES -->
+<div class="card chart-box-card shadow-sm mb-4" style="overflow: hidden;">
+    <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center" style="border-color: var(--av-border);">
+        <div>
+            <h6 class="fw-bold mb-0" style="color: var(--av-text-main);">Encuestas Recientes</h6>
+            <small class="text-secondary">Últimas evaluaciones generadas en la plataforma</small>
+        </div>
+        <a href="/Panel/Encuestas" class="btn btn-sm btn-outline-primary px-3 fw-semibold" style="border-radius: 8px;">
+            Ver todas
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-clean align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-3">EMPRESA</th>
+                    <th>FECHA APERTURA</th>
+                    <th>CIERRE ESTIMADO</th>
+                    <th class="text-center">ESTATUS</th>
+                    <th class="text-end pe-3">ACCIÓN</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <!-- Nombre Empresa -->
+                            <td class="ps-3 fw-semibold" style="color: var(--av-text-main);">
+                                @(item.Empresa?.NombreEmpresa ?? "N/A")
+                            </td>
+
+                            <!-- Fechas -->
+                            <td class="text-secondary" style="font-size: 0.85rem;">
+                                @item.FechaCreacion.ToString("dd/MM/yyyy")
+                            </td>
+                            <td class="text-secondary" style="font-size: 0.85rem;">
+                                @item.FechaCierre.ToString("dd/MM/yyyy")
+                            </td>
+
+                            <!-- Estatus Modernizado con Dot -->
+                            <td class="text-center">
+                                @if (item.EstaActiva)
+                                {
+                                    <span class="status-badge in-progress">
+                                        <span class="dot"></span>
+                                        <span>En Curso</span>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge finished">
+                                        <span class="dot"></span>
+                                        <span>Finalizada</span>
+                                    </span>
+                                }
+                            </td>
+
+                            <!-- Acción con Texto Descriptivo -->
+                            <td class="text-end pe-3">
+                                <a href="/Panel/MonitorearEncuesta?empresaId=@item.EmpresaID" class="btn-action-view" title="Monitorear resultados de esta encuesta">
+                                    <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i>
+                                    <span>Resultados</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="fa-regular fa-folder-open fa-2x mb-2 d-block opacity-50"></i>
+                            No hay registros de encuestas recientes.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            function esModoOscuro() {
+                return document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            }
+
+            let chartLineInstance = null;
+            let chartDonutInstance = null;
+
+            function inicializarGraficas() {
+                const dark = esModoOscuro();
+                const colorTexto = dark ? '#94A3B8' : '#64748B';
+                const colorGrid = dark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
+                const colorFondoBordeDona = dark ? '#111C38' : '#FFFFFF';
+
+                // Línea de Respuestas
+                const canvasLine = document.getElementById('chartRespuestas');
+                if (canvasLine) {
+                    if (chartLineInstance) chartLineInstance.destroy();
+
+                    const ctxLine = canvasLine.getContext('2d');
+                    const gradientLine = ctxLine.createLinearGradient(0, 0, 0, 240);
+                    gradientLine.addColorStop(0, dark ? 'rgba(56, 189, 248, 0.4)' : 'rgba(24, 105, 179, 0.35)');
+                    gradientLine.addColorStop(1, 'rgba(24, 105, 179, 0.00)');
+
+                    chartLineInstance = new Chart(ctxLine, {
+                        type: 'line',
+                        data: {
+                            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.GraficaDiasLabels ?? new List<string>())),
+                            datasets: [{
+                                label: 'Respuestas',
+                                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.GraficaDiasData ?? new List<int>())),
+                                borderColor: dark ? '#38BDF8' : '#1869B3',
+                                borderWidth: 2.5,
+                                backgroundColor: gradientLine,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: dark ? '#38BDF8' : '#1869B3',
+                                pointBorderColor: dark ? '#111C38' : '#FFFFFF',
+                                pointBorderWidth: 2,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: { intersect: false, mode: 'index' },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: '#0F172A',
+                                    padding: 10,
+                                    cornerRadius: 8,
+                                    titleFont: { size: 12, weight: 'bold' }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { precision: 0, color: colorTexto, font: { size: 11 } },
+                                    grid: { color: colorGrid, drawBorder: false }
+                                },
+                                x: {
+                                    ticks: { color: colorTexto, font: { size: 11 } },
+                                    grid: { display: false }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Dona de Encuestas
+                const canvasDonut = document.getElementById('chartEstatus');
+                if (canvasDonut) {
+                    if (chartDonutInstance) chartDonutInstance.destroy();
+
+                    const totalCentro = @(totalEncuestasPlataforma);
+
+                    const pluginTextoCentral = {
+                        id: 'centerText',
+                        beforeDraw: function (chart) {
+                            const width = chart.width;
+                            const height = chart.height;
+                            const ctx = chart.ctx;
+                            ctx.restore();
+
+                            ctx.font = "bold 26px 'Plus Jakarta Sans', sans-serif";
+                            ctx.textBaseline = "middle";
+                            ctx.fillStyle = esModoOscuro() ? "#FFFFFF" : "#0F172A";
+
+                            const text = totalCentro.toString();
+                            const textX = Math.round((width - ctx.measureText(text).width) / 2);
+                            const textY = height / 2 - 10;
+                            ctx.fillText(text, textX, textY);
+
+                            ctx.font = "600 11px 'Plus Jakarta Sans', sans-serif";
+                            ctx.fillStyle = colorTexto;
+                            const subText = "ENCUESTAS";
+                            const subTextX = Math.round((width - ctx.measureText(subText).width) / 2);
+                            const subTextY = height / 2 + 13;
+                            ctx.fillText(subText, subTextX, subTextY);
+
+                            ctx.save();
+                        }
+                    };
+
+                    chartDonutInstance = new Chart(canvasDonut.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['En Curso', 'Finalizadas', 'Pendientes'],
+                            datasets: [{
+                                data: [
+                                    @(ViewBag.EncuestasActivas ?? 0),
+                                    @(ViewBag.EncuestasFinalizadas ?? 0),
+                                    @(ViewBag.SolicitudesPendientesCount ?? 0)
+                                ],
+                                backgroundColor: ['#F59E0B', '#10B981', '#1869B3'],
+                                borderWidth: 3,
+                                borderColor: colorFondoBordeDona,
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '76%',
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: colorTexto,
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle',
+                                        padding: 16,
+                                        font: { size: 11, weight: '500' }
+                                    }
+                                },
+                                tooltip: { backgroundColor: '#0F172A', padding: 10, cornerRadius: 8 }
+                            }
+                        },
+                        plugins: [pluginTextoCentral]
+                    });
+                }
+            }
+
+            inicializarGraficas();
+
+            const themeBtn = document.getElementById('themeToggleBtn');
+            if (themeBtn) {
+                themeBtn.addEventListener('click', () => {
+                    setTimeout(inicializarGraficas, 50);
+                });
+            }
+        });
+    </script>
+}

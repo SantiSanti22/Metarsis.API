@@ -1,0 +1,850 @@
+﻿@model Metarsis.Api.Models.Encuesta
+@{
+    Layout = null; 
+    int respondidas = ViewBag.TotalRespondidas ?? 0;
+    int porcentajeEficiencia = 62; 
+    
+    var metricasPreguntas = ViewBag.MetricasPreguntas as IEnumerable<dynamic>; 
+    var preguntasAbiertas = ViewBag.PreguntasAbiertas as IEnumerable<dynamic>;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- SINCRONIZACIÓN DE TEMA CLARO/OSCURO -->
+    <script>
+        (function() {
+            const temaGuardado = localStorage.getItem('avenzo-theme') 
+                              || localStorage.getItem('theme') 
+                              || localStorage.getItem('bs-theme') 
+                              || 'light';
+            document.documentElement.setAttribute('data-bs-theme', temaGuardado);
+        })();
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Diagnóstico - @Model.Empresa.NombreEmpresa</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        /* VARIABLES DE DISEÑO PARA LA INTERFAZ DE NAVEGACIÓN */
+        :root {
+            --av-primary: #0B72B9;
+            --av-bg-body: #F1F5F9;
+            --av-surface: #FFFFFF;
+            --av-border: #E2E8F0;
+            --av-pill-bg: #F8FAFC;
+            --av-text-main: #0F172A;
+            --av-text-muted: #64748B;
+        }
+
+        [data-bs-theme="dark"] {
+            --av-primary: #38BDF8;
+            --av-bg-body: #0B132B;
+            --av-surface: #111C38;
+            --av-border: #1E293B;
+            --av-pill-bg: #162244;
+            --av-text-main: #F8FAFC;
+            --av-text-muted: #94A3B8;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; 
+            color: var(--av-text-main); 
+            background-color: var(--av-bg-body); 
+            margin: 0; 
+            padding: 0; 
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        /* BARRA SUPERIOR FIJA DE ACCIONES */
+        .report-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: var(--av-surface);
+            border-bottom: 1px solid var(--av-border);
+            padding: 10px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.25s ease, border-color 0.25s ease;
+        }
+
+        .report-toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-toolbar-back {
+            background-color: var(--av-pill-bg);
+            border: 1px solid var(--av-border);
+            color: var(--av-text-muted);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-toolbar-back:hover {
+            color: var(--av-primary);
+            border-color: var(--av-primary);
+            background-color: var(--av-surface);
+        }
+
+        .toolbar-doc-title {
+            font-size: 0.84rem;
+            color: var(--av-text-muted);
+            border-left: 1px solid var(--av-border);
+            padding-left: 14px;
+            font-weight: 500;
+        }
+
+        .toolbar-doc-title strong {
+            color: var(--av-text-main);
+        }
+
+        .report-toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* BOTONES DE ACCIÓN SUPERIORES */
+        .btn-action {
+            border: none;
+            padding: 6px 13px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-edit-mode {
+            background-color: var(--av-pill-bg);
+            color: var(--av-primary);
+            border: 1px solid var(--av-border);
+        }
+        .btn-edit-mode:hover {
+            background-color: var(--av-primary);
+            color: #FFFFFF !important;
+            border-color: var(--av-primary);
+        }
+
+        .btn-edit-saving {
+            background-color: #10B981 !important;
+            color: #FFFFFF !important;
+            border: 1px solid #10B981 !important;
+        }
+        .btn-edit-saving:hover {
+            background-color: #059669 !important;
+        }
+
+        .btn-cancel-edit {
+            background-color: var(--av-pill-bg);
+            border: 1px solid var(--av-border);
+            color: var(--av-text-muted);
+        }
+        .btn-cancel-edit:hover {
+            background-color: var(--av-surface);
+            color: var(--av-text-main);
+        }
+        
+        .btn-save-print { 
+            background-color: var(--av-primary);
+            color: #FFFFFF;
+            border: 1px solid var(--av-primary);
+            box-shadow: 0 2px 6px rgba(11, 114, 185, 0.25);
+        }
+        .btn-save-print:hover { 
+            opacity: 0.92;
+            color: #FFFFFF !important;
+            transform: translateY(-1px);
+        }
+
+        .btn-whatsapp { 
+            background-color: #10B981; 
+            color: #FFFFFF;
+            border: 1px solid #10B981;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+        }
+        .btn-whatsapp:hover { 
+            background-color: #059669; 
+            border-color: #059669;
+            color: #FFFFFF !important;
+            transform: translateY(-1px);
+        }
+
+        /* MODALES */
+        .modal-avenzo .modal-content {
+            border-radius: 14px;
+            border: 1px solid var(--av-border);
+            background-color: var(--av-surface);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-modal-cancel {
+            background-color: var(--av-pill-bg);
+            border: 1px solid var(--av-border);
+            color: var(--av-text-muted);
+            font-size: 0.82rem;
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 7px 16px;
+            transition: all 0.2s ease;
+        }
+        .btn-modal-cancel:hover {
+            background-color: var(--av-surface);
+            color: var(--av-text-main);
+        }
+
+        /* DISEÑO DE PÁGINAS PARA IMPRESIÓN Y EXPORTACIÓN   */
+        #contenido-reporte { 
+            width: 850px; 
+            margin: 30px auto 60px auto; 
+            font-family: Helvetica, Arial, sans-serif;
+            color: #333;
+        }
+
+        .page { 
+            background-color: white !important; 
+            color: #333 !important;
+            width: 850px; 
+            min-height: 1050px; 
+            height: auto; 
+            padding: 30px 45px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.07); 
+            border: 1px solid #E2E8F0; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            margin-bottom: 25px; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        
+        .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #007ACC; padding-bottom: 10px; margin-bottom: 14px; }
+        .header-text h4 { color: #6b7280; margin: 0; font-size: 13px; font-weight: 500; text-transform: uppercase; }
+        .header-text h1 { color: #111827; margin: 4px 0; font-size: 22px; font-weight: bold; }
+        .header-text h3 { color: #007ACC; margin: 0; font-size: 14px; font-weight: 600; }
+        .logo { height: 35px; }
+
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-gray { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; }
+        
+        .dark-box { color: white; padding: 5px; text-align: center; font-size: 11px; font-weight: bold; margin-bottom: 8px; border-radius: 4px; text-transform: uppercase; }
+        .bg-blue { background-color: #1e3a8a; }
+        .bg-gray { background-color: #4b5563; }
+        .bg-teal { background-color: #0d9488; }
+        .bg-orange { background-color: #f59e0b; }
+
+        .top-row { display: flex; gap: 15px; margin-bottom: 14px; align-items: stretch; }
+        .ficha-col { width: 28%; flex-shrink: 0; }
+        .kpis-col { width: 72%; display: flex; gap: 15px; }
+        .kpi-card { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; }
+        
+        .ficha-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px; }
+        .ficha-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .ficha-row .label { color: #6b7280; }
+        .ficha-row .value { color: #111827; font-weight: bold; text-align: right; }
+
+        .circle-chart { width: 55px; height: 55px; border: 4px solid #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; font-size: 18px; font-weight: bold; color: #111827; }
+        .kpi-value { font-size: 22px; font-weight: bold; color: #111827; margin: 4px 0; }
+        .status-text { font-size: 10.5px; font-weight: 600; color: #4b5563; line-height: 1.2; }
+
+        .ia-card-container {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+        .ia-card-header {
+            background-color: #1e3a8a;
+            color: #ffffff;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .ia-card-body {
+            font-size: 11.5px;
+            color: #4b5563;
+            line-height: 1.5;
+            text-align: justify;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .ia-card-body.modo-editable {
+            background-color: #F8FAFC !important;
+            border: 1px dashed #0284C7 !important;
+            outline: none !important;
+            cursor: text;
+        }
+
+        .ia-card-body.modo-editable:focus {
+            background-color: #FFFFFF !important;
+            border-color: #0284C7 !important;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15) !important;
+        }
+
+        .ia-card-body ul {
+            margin: 0;
+            padding-left: 18px;
+            font-size: 11.5px;
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        .ia-card-body li {
+            margin-bottom: 4px;
+        }
+
+        .ia-card-body li:last-child {
+            margin-bottom: 0;
+        }
+
+        .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .question-card { margin-bottom: 0; page-break-inside: avoid !important; break-inside: avoid !important; }
+        .question-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .question-text { font-size: 11.5px; font-weight: bold; color: #1e3a8a; margin: 0; max-width: 75%; line-height: 1.2; }
+        .prom-badge { background-color: #fef3c7; color: #b45309; padding: 3px 5px; border-radius: 4px; font-size: 10.5px; font-weight: bold; white-space: nowrap; }
+        
+        .option-container { margin-bottom: 6px; }
+        .opt-name { font-size: 10.5px; color: #4b5563; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; margin-bottom: 2px; }
+        .bar-wrapper { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .bar-bg { background-color: #e5e7eb; height: 5px; border-radius: 3px; flex-grow: 1; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 3px; background-color: #007ACC; }
+        .opt-val { font-size: 10px; font-weight: bold; color: #1e3a8a; white-space: nowrap; width: 45px; text-align: right; }
+
+        .qa-block { margin-bottom: 18px; page-break-inside: avoid; break-inside: avoid; }
+        .qa-question { font-size: 12.5px; font-weight: bold; color: #1e3a8a; margin: 0 0 4px 0; }
+        .qa-subtitle { font-size: 11.5px; font-weight: bold; color: #4b5563; margin: 0 0 4px 0; }
+        .qa-list { margin: 0 0 6px 0; padding-left: 18px; font-size: 11.5px; color: #374151; }
+        
+        .qa-highlight-green { 
+            background-color: #ecfdf5; 
+            border: 1px solid #10b981; 
+            color: #065f46; 
+            padding: 10px; 
+            font-size: 11.5px; 
+            border-radius: 6px; 
+            margin-top: 6px; 
+            line-height: 1.45; 
+            user-select: text;
+        }
+
+        .methodology-section { margin-bottom: 20px; page-break-inside: avoid; }
+        .methodology-title { font-size: 13px; font-weight: bold; color: #1e3a8a; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-bottom: 8px; }
+        .methodology-text { font-size: 11.5px; color: #4b5563; line-height: 1.5; margin-bottom: 8px; text-align: justify; }
+        
+        .scale-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .scale-item { display: flex; align-items: center; background: #f9fafb; padding: 8px; border-radius: 6px; border: 1px solid #e5e7eb; }
+        .scale-color { width: 14px; height: 14px; border-radius: 4px; margin-right: 10px; flex-shrink: 0; }
+        .scale-details { display: flex; flex-direction: column; }
+        .scale-range { font-size: 11px; font-weight: bold; color: #111827; }
+        .scale-label { font-size: 10px; color: #6b7280; }
+        .c-red { background-color: #ef4444; } .c-orange { background-color: #f97316; } .c-blue { background-color: #3b82f6; } .c-green { background-color: #10b981; }
+
+        .footer { position: absolute; bottom: 20px; left: 45px; right: 45px; display: flex; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 8px; font-size: 10.5px; color: #6b7280; }
+        .page-num { color: #007ACC; font-weight: bold; }
+
+        /* REGLAS PARA IMPRESIÓN Y PDF */
+        @@media print {
+            .report-toolbar { display: none !important; }
+            #contenido-reporte { margin: 0 auto !important; }
+            .page { 
+                box-shadow: none !important; 
+                border: none !important; 
+                margin-bottom: 0 !important; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. BARRA SUPERIOR DE ACCIONES -->
+    <header class="report-toolbar" id="barra-herramientas">
+        <div class="report-toolbar-left">
+            <a href="/Panel/Encuestas" class="btn-toolbar-back" title="Volver a Encuestas">
+                <i class="fa-solid fa-arrow-left fa-sm"></i>
+                <span>Volver a Encuestas</span>
+            </a>
+            <span class="toolbar-doc-title">
+                Previsualización del Reporte: <strong>@Model.Empresa.NombreEmpresa</strong>
+            </span>
+        </div>
+
+        <div class="report-toolbar-right" id="botones-flotantes">
+            <!-- 1. Botón Editar / Guardar Cambios -->
+            <button type="button" class="btn-action btn-edit-mode" id="btnEditar" onclick="alternarModoEdicion()">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span id="txtBtnEditar">Editar</span>
+            </button>
+
+            <!-- 1.1 Botón Cancelar (Oculto inicialmente) -->
+            <button type="button" class="btn-action btn-cancel-edit d-none" id="btnCancelarEdicion" onclick="cancelarEdicion()">
+                Cancelar
+            </button>
+
+            <!-- 2. Botón Guardar y Exportar PDF -->
+            <button onclick="guardarEImprimir()" class="btn-action btn-save-print" id="btnGuardar">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Guardar PDF</span>
+            </button>
+
+            <!-- 3. Botón Enviar a Cliente -->
+            <button type="button" class="btn-action btn-whatsapp" id="btnWhatsapp" data-bs-toggle="modal" data-bs-target="#modalEnviarReporteConfirm">
+                <i class="fa-brands fa-whatsapp fa-sm"></i>
+                <span>Enviar</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 2. CONTENEDOR PRINCIPAL DEL INFORME  -->
+    <div id="contenido-reporte">
+        
+        <!-- PÁGINA 1: RESUMEN, KPIS, DIAGNÓSTICO IA Y GRÁFICAS CUANTITATIVAS -->
+        <div class="page">
+            <div class="header">
+                <div class="header-text">
+                    <h4>Metarsis Encuestas</h4>
+                    <h1>Reporte Ejecutivo de Clima Laboral</h1>
+                    <h3>Dashboard de Diagnóstico y Resultados Cuantitativos</h3>
+                </div>
+                <img src="/images/Avenzo_Logo_Header.png" alt="Avenzo Logo" class="logo">
+            </div>
+
+            <div class="top-row">
+                <div class="ficha-col card-gray">
+                    <div class="dark-box bg-gray">FICHA TÉCNICA</div>
+                    <div class="ficha-row"><span class="label">Empresa:</span><span class="value">@Model.Empresa.NombreEmpresa</span></div>
+                    <div class="ficha-row"><span class="label">Participantes:</span><span class="value">@respondidas evaluados</span></div>
+                    <div class="ficha-row"><span class="label">Total respuestas:</span><span class="value">@ViewBag.RespuestasIndividuales</span></div>
+                    <div class="ficha-row"><span class="label">Fecha Cierre:</span><span class="value">@Model.FechaCierre.ToString("dd/MM/yyyy")</span></div>
+                </div>
+                
+                <div class="kpis-col">
+                    <div class="card kpi-card">
+                        <div class="dark-box bg-blue" style="width: 100%;">ÍNDICE GLOBAL</div>
+                        <div class="circle-chart">@porcentajeEficiencia%</div>
+                        <div class="status-text">Estable / Moderado</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="dark-box bg-teal" style="width: 100%;">PARTICIPACIÓN</div>
+                        <div class="kpi-value">92%</div>
+                        <div class="status-text">Alta Cobertura</div>
+                    </div>
+                    <div class="card kpi-card">
+                        <div class="dark-box bg-orange" style="width: 100%;">eNPS (LEALTAD)</div>
+                        <div class="kpi-value">+14</div>
+                        <div class="status-text">Promotores superan Detractores</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ia-card-container">
+                <div class="ia-card-header">
+                    DIAGNÓSTICO EJECUTIVO (IA)
+                </div>
+                <div id="txt-diagnostico" contenteditable="false" class="ia-card-body">
+                    @Model.DiagnosticoEjecutivo
+                </div>
+            </div>
+
+            <div class="ia-card-container">
+                <div class="ia-card-header">
+                    RECOMENDACIONES CLAVE (IA)
+                </div>
+                <div id="txt-recomendaciones" contenteditable="false" class="ia-card-body">
+                    @{
+                        string recomendaciones = Model.RecomendacionesClave ?? "";
+                        string decodedHtml = System.Net.WebUtility.HtmlDecode(recomendaciones);
+                    }
+                    @Html.Raw(decodedHtml)
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                @if (metricasPreguntas != null && metricasPreguntas.Any())
+                {
+                    int index = 1;
+                    foreach (var metrica in metricasPreguntas)
+                    {
+                        <div class="card question-card">
+                            <div class="question-header">
+                                <p class="question-text">@index. @metrica.PreguntaTexto</p>
+                                <div class="prom-badge">Prom: @metrica.Promedio / 5.0</div>
+                            </div>
+                            @foreach (var opcion in metrica.Opciones)
+                            {
+                                <div class="option-container">
+                                    <span class="opt-name" title="@opcion.Nombre">@opcion.Nombre</span>
+                                    <div class="bar-wrapper">
+                                        <div class="bar-bg">
+                                            <div class="bar-fill" style="width: @opcion.Porcentaje%;"></div>
+                                        </div>
+                                        <span class="opt-val">@opcion.Porcentaje% (@opcion.Cantidad)</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        index++;
+                    }
+                }
+            </div>
+            
+            <div class="footer">
+                <span>Metarsis Encuestas | Reporte Confidencial</span>
+                <span>Página <span class="page-num">1</span> de 3</span>
+            </div>
+        </div>
+
+        <!-- PÁGINA 2: ANÁLISIS CUALITATIVO Y PREGUNTAS ABIERTAS -->
+        @if (preguntasAbiertas != null && preguntasAbiertas.Any())
+        {
+            <div class="page">
+                <div class="header">
+                    <div class="header-text">
+                        <h4>Metarsis Encuestas</h4>
+                        <h1>Síntesis de Respuestas Abiertas</h1>
+                        <h3>Análisis Cualitativo del Personal</h3>
+                    </div>
+                    <img src="/images/Avenzo_Logo_Header.png" alt="Avenzo Logo" class="logo">
+                </div>
+                <div style="width: 100%;">
+                    @{ char letra = 'A'; }
+                    @foreach (var abierta in preguntasAbiertas)
+                    {
+                        <div class="qa-block">
+                            <p class="qa-question">@letra. @abierta.PreguntaTexto</p>
+                            <p class="qa-subtitle">Tendencias principales identificadas por el equipo:</p>
+                            <ul class="qa-list">
+                                @foreach (var respuesta in abierta.Respuestas)
+                                {
+                                    <li>"@respuesta"</li>
+                                }
+                            </ul>
+                            <div class="qa-highlight-green" id="txt-abierta-@letra">
+                                <strong>Resumen Analítico (IA):</strong> @abierta.ResumenGeneral
+                            </div>
+                        </div>
+                        letra++;
+                    }
+                </div>
+                <div class="footer">
+                    <span>Metarsis Encuestas | Reporte Confidencial</span>
+                    <span>Página <span class="page-num">2</span> de 3</span>
+                </div>
+            </div>
+        }
+
+        <!-- PÁGINA 3: EXPLICACION DE LOS PROMEDIOS Y LAS MEDIDAS KPI -->
+        <div class="page">
+            <div class="header">
+                <div class="header-text">
+                    <h4>Metarsis Encuestas</h4>
+                    <h1>Anexo: Metodología de Evaluación</h1>
+                    <h3>Guía de Interpretación de Resultados</h3>
+                </div>
+                <img src="/images/Avenzo_Logo_Header.png" alt="Avenzo Logo" class="logo">
+            </div>
+            <div style="width: 100%;">
+                <div class="methodology-section">
+                    <div class="methodology-title">1. Índice de Clima Global (Métrica de Resumen)</div>
+                    <p class="methodology-text">El <strong>Índice de Clima Global</strong> representa la salud general de la organización expresada en un porcentaje del 0% al 100%. Este indicador se calcula promediando todas las respuestas cuantitativas de la evaluación. La codificación de colores permite identificar rápidamente el estado actual de la empresa:</p>
+                    <div class="scale-grid">
+                        <div class="scale-item"><div class="scale-color c-red"></div><div class="scale-details"><span class="scale-range">0% - 40%: Crítico / Deficiente</span><span class="scale-label">Requiere intervención inmediata por alto riesgo.</span></div></div>
+                        <div class="scale-item"><div class="scale-color c-orange"></div><div class="scale-details"><span class="scale-range">41% - 60%: Atención Requerida</span><span class="scale-label">Existen áreas de fricción significativas.</span></div></div>
+                        <div class="scale-item"><div class="scale-color c-blue"></div><div class="scale-details"><span class="scale-range">61% - 80%: Estable / Moderado</span><span class="scale-label">Ambiente operativo funcional.</span></div></div>
+                        <div class="scale-item"><div class="scale-color c-green"></div><div class="scale-details"><span class="scale-range">81% - 100%: Excelente / Óptimo</span><span class="scale-label">Alta satisfacción laboral y retención sólida.</span></div></div>
+                    </div>
+                </div>
+                <div class="methodology-section" style="margin-top: 25px;">
+                    <div class="methodology-title">2. Promedios por Pregunta (Insignia "Prom")</div>
+                    <p class="methodology-text">Cada pregunta incluye una insignia (Ej. <strong>Prom: 3.2 / 5.0</strong>). Este valor representa la calificación matemática exacta otorgada a dicho reactivo, basada en una escala de Likert estándar (donde 1 es la respuesta más negativa y 5 la más positiva).</p>
+                </div>
+                <div class="methodology-section" style="margin-top: 25px;">
+                    <div class="methodology-title">3. Análisis Cualitativo por Inteligencia Artificial</div>
+                    <p class="methodology-text">Las preguntas abiertas son procesadas a través de algoritmos de IA para su análisis semántico. Los <strong>Cuadros Verdes de Resumen Analítico</strong> representan una síntesis automática de las tendencias recurrentes escritas por el personal.</p>
+                </div>
+            </div>
+            <div class="footer">
+                <span>Metarsis Encuestas | Reporte Confidencial</span>
+                <span>Página <span class="page-num">3</span> de 3</span>
+            </div>
+        </div>
+    
+    </div>
+
+    <!-- 3. MODAL DE CONFIRMACIÓN PARA ENVÍO POR WHATSAPP -->
+    <div class="modal fade modal-avenzo" id="modalEnviarReporteConfirm" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-body p-4 text-center">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="background-color: rgba(16, 185, 129, 0.12); width: 56px; height: 56px;">
+                        <i class="fa-brands fa-whatsapp fa-2x" style="color: #10B981;"></i>
+                    </div>
+                    
+                    <h5 class="fw-bold mb-2" style="color: var(--av-text-main);">¿Enviar reporte al cliente?</h5>
+                    
+                    <p class="text-secondary small mb-4" style="line-height: 1.5;">
+                        Se enviará un mensaje por WhatsApp al representante con el enlace directo para visualizar y descargar el reporte oficial.
+                    </p>
+                    
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-modal-cancel px-3" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn btn-whatsapp px-3 py-2" 
+                                id="btnConfirmarModalWhatsapp"
+                                onclick="ejecutarEnvioWhatsApp()">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Sí, enviar enlace
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 4. LÓGICA DE CONTROL: EDICIÓN, EXPORTACIÓN HTML2 PDF Y TWILIO -->
+    <script>
+        let editando = false;
+        let backupDiagnostico = '';
+        let backupRecomendaciones = '';
+
+        async function alternarModoEdicion() {
+            const btnEditar = document.getElementById('btnEditar');
+            const txtBtn = document.getElementById('txtBtnEditar');
+            const btnCancelar = document.getElementById('btnCancelarEdicion');
+            const btnGuardarPdf = document.getElementById('btnGuardar');
+            const btnWhatsapp = document.getElementById('btnWhatsapp');
+
+            const diagEl = document.getElementById('txt-diagnostico');
+            const recEl = document.getElementById('txt-recomendaciones');
+
+            if (!editando) {
+                editando = true;
+                backupDiagnostico = diagEl.innerHTML;
+                backupRecomendaciones = recEl.innerHTML;
+
+                diagEl.contentEditable = "true";
+                recEl.contentEditable = "true";
+                diagEl.classList.add('modo-editable');
+                recEl.classList.add('modo-editable');
+
+                btnEditar.className = 'btn-action btn-edit-saving';
+                btnEditar.innerHTML = '<i class="fa-solid fa-check"></i><span id="txtBtnEditar">Guardar Cambios</span>';
+                btnCancelar.classList.remove('d-none');
+
+                btnGuardarPdf.disabled = true;
+                btnWhatsapp.disabled = true;
+                btnGuardarPdf.style.opacity = '0.5';
+                btnWhatsapp.style.opacity = '0.5';
+            } else {
+                btnEditar.disabled = true;
+                btnEditar.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Guardando...</span>';
+
+                const datos = {
+                    EncuestaId: @(Model.EncuestaID),
+                    Diagnostico: diagEl.innerText.trim(),
+                    Recomendaciones: recEl.innerHTML.trim()
+                };
+
+                try {
+                    const response = await fetch('/Panel/GuardarTextosReporte', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(datos)
+                    });
+
+                    if (response.ok) {
+                        desactivarModoEdicion();
+                        alert("Los cambios en el diagnóstico y recomendaciones se guardaron correctamente.");
+                    } else {
+                        alert("Error al guardar los cambios en la base de datos.");
+                        btnEditar.disabled = false;
+                        btnEditar.innerHTML = '<i class="fa-solid fa-check"></i><span id="txtBtnEditar">Guardar Cambios</span>';
+                    }
+                } catch (e) {
+                    alert("Error de conexión al guardar los textos.");
+                    btnEditar.disabled = false;
+                    btnEditar.innerHTML = '<i class="fa-solid fa-check"></i><span id="txtBtnEditar">Guardar Cambios</span>';
+                }
+            }
+        }
+
+        function cancelarEdicion() {
+            const diagEl = document.getElementById('txt-diagnostico');
+            const recEl = document.getElementById('txt-recomendaciones');
+
+            diagEl.innerHTML = backupDiagnostico;
+            recEl.innerHTML = backupRecomendaciones;
+
+            desactivarModoEdicion();
+        }
+
+        function desactivarModoEdicion() {
+            editando = false;
+            const btnEditar = document.getElementById('btnEditar');
+            const btnCancelar = document.getElementById('btnCancelarEdicion');
+            const btnGuardarPdf = document.getElementById('btnGuardar');
+            const btnWhatsapp = document.getElementById('btnWhatsapp');
+
+            const diagEl = document.getElementById('txt-diagnostico');
+            const recEl = document.getElementById('txt-recomendaciones');
+
+            diagEl.contentEditable = "false";
+            recEl.contentEditable = "false";
+            diagEl.classList.remove('modo-editable');
+            recEl.classList.remove('modo-editable');
+
+            btnEditar.disabled = false;
+            btnEditar.className = 'btn-action btn-edit-mode';
+            btnEditar.innerHTML = '<i class="fa-solid fa-pen-to-square"></i><span id="txtBtnEditar">Editar</span>';
+            btnCancelar.classList.add('d-none');
+
+            btnGuardarPdf.disabled = false;
+            btnWhatsapp.disabled = false;
+            btnGuardarPdf.style.opacity = '1';
+            btnWhatsapp.style.opacity = '1';
+        }
+
+        async function guardarEImprimir() {
+            const btn = document.getElementById('btnGuardar');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando PDF...';
+            btn.disabled = true;
+
+            const datos = {
+                EncuestaId: @(Model.EncuestaID),
+                Diagnostico: document.getElementById('txt-diagnostico').innerText.trim(),
+                Recomendaciones: document.getElementById('txt-recomendaciones').innerHTML.trim()
+            };
+
+            try {
+                await fetch('/Panel/GuardarTextosReporte', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+
+                const elemento = document.getElementById('contenido-reporte'); 
+                
+                const opciones = {
+                    margin:       0, 
+                    filename:     `Reporte_Clima_Laboral_@(Model.EncuestaID).pdf`,
+                    image:        { type: 'jpeg', quality: 1.0 },
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        scrollY: 0,
+                        onclone: function(clonedDoc) {
+                            const contenedor = clonedDoc.getElementById('contenido-reporte');
+                            contenedor.style.margin = '0 auto';
+                            
+                            const paginas = clonedDoc.querySelectorAll('.page');
+                            paginas.forEach(p => { 
+                                p.style.boxShadow = 'none'; 
+                                p.style.border = 'none'; 
+                                p.style.marginBottom = '0'; 
+                            });
+                        }
+                    },
+                    jsPDF:        { unit: 'px', format: [850, 1100], orientation: 'portrait' },
+                    pagebreak:    { mode: ['css', 'legacy'] }
+                };
+
+                const pdfBlob = await html2pdf().from(elemento).set(opciones).outputPdf('blob');
+
+                const formData = new FormData();
+                formData.append("archivoPdf", pdfBlob, `Reporte_@(Model.EncuestaID).pdf`);
+
+                const responseUpload = await fetch(`/api/ReporteFinal/subir-pdf-servidor/@(Model.EncuestaID)`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (responseUpload.ok) {
+                    btn.innerHTML = '<i class="fas fa-check"></i> ¡Listo! Descargando...';
+                    html2pdf().from(elemento).set(opciones).save();
+
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar PDF';
+                        btn.disabled = false;
+                    }, 1500);
+                } else {
+                    alert("Error al registrar el PDF en el servidor.");
+                    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar PDF';
+                    btn.disabled = false;
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Error al procesar el documento.");
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar PDF';
+                btn.disabled = false;
+            }
+        }
+
+        async function ejecutarEnvioWhatsApp() {
+            const btn = document.getElementById('btnConfirmarModalWhatsapp');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Enviando...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/ReporteFinal/enviar-whatsapp/@(Model.EncuestaID)`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const modalEl = document.getElementById('modalEnviarReporteConfirm');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+
+                if (response.ok) {
+                    alert("¡Reporte enviado exitosamente por WhatsApp!");
+                } else {
+                    const errText = await response.text();
+                    alert("Problema al enviar WhatsApp:\n" + errText);
+                }
+            } catch (error) {
+                alert("Error de conexión al intentar enviar el WhatsApp.");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i> Sí, enviar enlace';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

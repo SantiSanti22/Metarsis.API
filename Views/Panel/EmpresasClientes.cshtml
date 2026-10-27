@@ -1,0 +1,560 @@
+﻿@model IEnumerable<Metarsis.Api.Models.EmpresaCliente>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    int totalEmpresas = Model != null ? Model.Count() : 0;
+    bool esAdmin = User.IsInRole("Admin");
+}
+
+<style>
+    /* ENCABEZADOS DE PÁGINA */
+    .page-header-title {
+        color: #0B72B9;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+    [data-bs-theme="dark"] .page-header-title {
+        color: #38BDF8 !important;
+    }
+
+    .page-header-sub {
+        color: #64748B;
+        font-size: 0.88rem;
+    }
+    [data-bs-theme="dark"] .page-header-sub {
+        color: #94A3B8 !important;
+    }
+
+    /* CONTENEDOR DE TABLA */
+    .empresas-card {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background: var(--av-surface);
+        overflow: hidden;
+    }
+
+    /* ENCABEZADOS DE TABLA */
+    .empresas-table thead tr th {
+        background-color: var(--av-pill-bg) !important;
+        border-bottom: 1px solid var(--av-border) !important;
+        color: var(--av-text-muted) !important;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 14px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .empresas-table tbody tr {
+        border-bottom: 1px solid var(--av-border);
+        transition: background-color 0.15s ease;
+    }
+
+    .empresas-table tbody tr:hover {
+        background-color: rgba(24, 105, 179, 0.02);
+    }
+    [data-bs-theme="dark"] .empresas-table tbody tr:hover {
+        background-color: rgba(56, 189, 248, 0.03);
+    }
+
+    .empresas-table tbody tr td {
+        padding: 12px 14px;
+        font-size: 0.86rem;
+    }
+
+    /* BADGE ID */
+    .badge-id-avenzo {
+        background-color: var(--av-pill-bg);
+        color: var(--av-text-muted);
+        border: 1px solid var(--av-border);
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 3px 7px;
+        display: inline-block;
+        min-width: 28px;
+        text-align: center;
+    }
+
+    /* BOTONES DE ACCIÓN */
+    .btn-action-icon-avenzo {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        border: 1px solid var(--av-border);
+        background-color: var(--av-pill-bg);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .btn-tbl-edit {
+        color: var(--av-primary);
+    }
+    .btn-tbl-edit:hover {
+        background-color: var(--av-primary);
+        color: #FFFFFF !important;
+        border-color: var(--av-primary);
+        box-shadow: 0 2px 6px rgba(24, 105, 179, 0.25);
+    }
+
+    .btn-tbl-del {
+        color: #EF4444;
+    }
+    .btn-tbl-del:hover {
+        background-color: #EF4444;
+        color: #FFFFFF !important;
+        border-color: #EF4444;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+    }
+
+    /* CONTROLES DE FILTRO */
+    .filter-box-wrap .input-group-text {
+        background-color: var(--av-surface) !important;
+        border-color: var(--av-border) !important;
+        color: var(--av-text-muted) !important;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .input-filter-control {
+        background-color: var(--av-surface) !important;
+        border-color: var(--av-border) !important;
+        color: var(--av-text-main) !important;
+        font-size: 0.86rem;
+        border-radius: 8px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-filter-control:focus {
+        border-color: var(--av-primary) !important;
+        box-shadow: 0 0 0 2px rgba(24, 105, 179, 0.15) !important;
+    }
+
+    /* MODALES INSTITUCIONALES */
+    .modal-avenzo .modal-content {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background-color: var(--av-surface);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    .modal-avenzo .modal-header {
+        border-bottom: 1px solid var(--av-border);
+        padding: 14px 18px;
+    }
+    .modal-avenzo .modal-footer {
+        border-top: 1px solid var(--av-border);
+        padding: 12px 18px;
+    }
+    .modal-avenzo .form-control {
+        background-color: var(--av-pill-bg);
+        border-color: var(--av-border);
+        color: var(--av-text-main);
+        border-radius: 8px;
+        font-size: 0.88rem;
+    }
+    .modal-avenzo .form-control:focus {
+        border-color: var(--av-primary);
+        box-shadow: 0 0 0 2px rgba(24, 105, 179, 0.15);
+    }
+
+    .btn-modal-cancel {
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        color: var(--av-text-muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 7px 16px;
+        transition: all 0.2s ease;
+    }
+    .btn-modal-cancel:hover {
+        background-color: var(--av-surface);
+        color: var(--av-text-main);
+    }
+
+    .btn-modal-save {
+        background-color: var(--av-primary);
+        border: 1px solid var(--av-primary);
+        color: #FFFFFF;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 6px;
+        padding: 7px 16px;
+        transition: all 0.2s ease;
+    }
+    .btn-modal-save:hover {
+        opacity: 0.92;
+        color: #FFFFFF !important;
+    }
+</style>
+
+<div class="container-fluid p-0">
+    <!-- ENCABEZADO Y CONTROLES DINÁMICOS DE BÚSQUEDA Y ORDENAMIENTO -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h4 class="page-header-title mb-1">
+                <i class="fa-solid fa-building me-2"></i>Directorio de Empresas y Contactos
+            </h4>
+            <p class="page-header-sub mb-0 d-flex align-items-center">
+                <span>Empresas que han establecido contacto inicial a través del canal de WhatsApp.</span>
+                @if (totalEmpresas > 0)
+                {
+                    <span class="badge ms-2" style="background-color: var(--av-pill-bg); color: var(--av-primary); border: 1px solid var(--av-border); font-size: 0.72rem; font-weight: 600;">
+                        @totalEmpresas registradas
+                    </span>
+                }
+            </p>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="input-group filter-box-wrap" style="width: 250px;">
+                <span class="input-group-text border-end-0">
+                    <i class="fa-solid fa-magnifying-glass fa-sm"></i>
+                </span>
+                <input type="text" id="buscadorEmpresas" class="form-control border-start-0 input-filter-control"
+                       placeholder="Buscar empresa, contacto o tel..."
+                       style="border-radius: 0 8px 8px 0;" />
+            </div>
+
+            <select id="filtroOrden" class="form-select input-filter-control" style="width: 195px;">
+                <option value="recientes" selected>Más recientes (ID Alto)</option>
+                <option value="antiguos">Más antiguos (ID Bajo)</option>
+            </select>
+        </div>
+    </div>
+
+   <!-- TARJETA Y TABLA DEL DIRECTORIO DE CLIENTES -->
+    <div class="card empresas-card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 empresas-table" id="tablaEmpresas">
+                    <thead>
+                        <tr>
+                            <th class="ps-4 py-3 text-center" style="width: 6%;">ID</th>
+                            <th class="py-3" style="width: 24%;">Empresa</th>
+                            <th class="py-3" style="width: 22%;">Representante</th>
+                            <th class="py-3" style="width: 18%;">Teléfono</th>
+                            <th class="py-3" style="width: 18%;">Fecha de Registro</th>
+                            @if (esAdmin)
+                            {
+                                <th class="py-3 text-end pe-4" style="width: 12%;">Acciones</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var empresa in Model)
+                            {
+                                <tr id="fila-empresa-@empresa.EmpresaID">
+                                    <!-- ID -->
+                                    <td class="ps-4 text-center">
+                                        <span class="badge-id-avenzo">@empresa.EmpresaID</span>
+                                    </td>
+
+                                    <!-- Empresa -->
+                                    <td class="campo-empresa" style="color: var(--av-text-main);">
+                                        @empresa.NombreEmpresa
+                                    </td>
+
+                                    <!-- Representante -->
+                                    <td class="text-secondary campo-contacto">
+                                        @(string.IsNullOrEmpty(empresa.NombreContacto) ? "No especificado" : empresa.NombreContacto)
+                                    </td>
+
+                                    <!-- Teléfono -->
+                                    <td class="text-secondary font-monospace campo-telefono" style="font-size: 0.82rem;">
+                                        @(string.IsNullOrEmpty(empresa.TelefonoContacto) ? "N/A" : empresa.TelefonoContacto)
+                                    </td>
+
+                                    <!-- Fecha -->
+                                    <td class="text-secondary" style="font-size: 0.84rem;">
+                                        @empresa.FechaRegistro.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+
+                                    <!-- Botones de Acción -->
+                                    @if (esAdmin)
+                                    {
+                                        <td class="text-end pe-4" style="white-space: nowrap;">
+                                            <div class="d-inline-flex gap-2">
+                                                <button type="button" class="btn-action-icon-avenzo btn-tbl-edit" title="Editar empresa"
+                                                        onclick="abrirModalEditar(@empresa.EmpresaID, '@Html.Raw(empresa.NombreEmpresa)', '@Html.Raw(empresa.NombreContacto)', '@Html.Raw(empresa.TelefonoContacto)')">
+                                                    <i class="fa-solid fa-pen-to-square fa-xs"></i>
+                                                </button>
+                                                <button type="button" class="btn-action-icon-avenzo btn-tbl-del" title="Eliminar empresa"
+                                                        onclick="abrirModalEliminar(@empresa.EmpresaID, '@Html.Raw(empresa.NombreEmpresa)')">
+                                                    <i class="fa-regular fa-trash-can fa-xs"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="@(esAdmin ? 6 : 5)" class="text-center py-5 text-muted">
+                                    <i class="fa-solid fa-building-circle-exclamation fa-2x mb-2 d-block opacity-50"></i>
+                                    No hay empresas registradas por el canal de WhatsApp todavía.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (esAdmin)
+{
+    <!-- 1. MODAL: EDICIÓN DE DATOS DE EMPRESA CLIENTE -->
+    <div class="modal fade modal-avenzo" id="modalEditarEmpresa" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center"
+                             style="background-color: rgba(24, 105, 179, 0.12); width: 32px; height: 32px;">
+                            <i class="fa-solid fa-pen-to-square fa-sm" style="color: var(--av-primary);"></i>
+                        </div>
+                        <h6 class="modal-title fw-bold mb-0" style="color: var(--av-text-main);">Editar Información de Empresa</h6>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <form id="formEditarEmpresa" onsubmit="guardarEdicionEmpresa(event)">
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="editEmpresaId" />
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary mb-1">Nombre de la Empresa *</label>
+                            <input type="text" id="editNombreEmpresa" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary mb-1">Nombre del Contacto</label>
+                            <input type="text" id="editNombreContacto" class="form-control" />
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold text-secondary mb-1">Teléfono / WhatsApp</label>
+                            <input type="text" id="editTelefonoContacto" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="modal-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-modal-save" id="btnGuardarEdicion">
+                            <i class="fa-solid fa-check me-1"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MODAL: CONFIRMACIÓN PARA ELIMINAR EMPRESA         -->
+    <div class="modal fade modal-avenzo" id="modalEliminarEmpresaConfirm" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-body p-4 text-center">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                         style="background-color: rgba(239, 68, 68, 0.12); width: 52px; height: 52px;">
+                        <i class="fa-solid fa-triangle-exclamation fa-lg" style="color: #EF4444;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2" style="color: var(--av-text-main);">¿Eliminar empresa?</h5>
+                    <p class="text-secondary small mb-4" style="line-height: 1.5;">
+                        ¿Estás seguro de que deseas eliminar permanentemente la empresa <strong id="empresaAEliminarNombre" style="color: var(--av-text-main);"></strong>?
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-modal-cancel px-3" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn btn-danger px-3 py-2 fw-medium shadow-sm"
+                                id="btnConfirmarEliminarEmpresa"
+                                style="border-radius: 6px; font-size: 0.82rem;"
+                                onclick="ejecutarEliminacionEmpresa()">
+                            <i class="fa-solid fa-trash-can me-1"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- NOTIFICADOR TOAST FLOTANTE PARA MENSAJES DE RESPUESTA -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+    <div id="appToast" class="toast align-items-center text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 10px;">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="appToastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function mostrarToast(mensaje, tipo = 'success') {
+            const toastEl = document.getElementById('appToast');
+            const toastMsg = document.getElementById('appToastMessage');
+            
+            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-dark', 'text-white');
+            
+            if (tipo === 'success') {
+                toastEl.style.backgroundColor = '#059669';
+                toastEl.classList.add('text-white');
+                toastMsg.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> ${mensaje}`;
+            } else if (tipo === 'error') {
+                toastEl.style.backgroundColor = '#DC2626';
+                toastEl.classList.add('text-white');
+                toastMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation me-2"></i> ${mensaje}`;
+            } else {
+                toastEl.style.backgroundColor = '#D97706';
+                toastEl.classList.add('text-white');
+                toastMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i> ${mensaje}`;
+            }
+
+            const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+            toast.show();
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const buscador = document.getElementById("buscadorEmpresas");
+            const filtroOrden = document.getElementById("filtroOrden");
+            const tbody = document.querySelector("#tablaEmpresas tbody");
+
+            buscador?.addEventListener("keyup", function () {
+                const termino = this.value.toLowerCase();
+                const filas = tbody.querySelectorAll("tr");
+
+                filas.forEach(fila => {
+                    if (fila.cells.length === 1) return;
+                    const textoFila = fila.textContent.toLowerCase();
+                    fila.style.display = textoFila.includes(termino) ? "" : "none";
+                });
+            });
+
+            filtroOrden?.addEventListener("change", function () {
+                const orden = this.value;
+                let filas = Array.from(tbody.querySelectorAll("tr"));
+
+                if (filas.length > 0 && filas[0].cells.length > 1) {
+                    filas.sort((a, b) => {
+                        const idA = parseInt(a.querySelector("td:first-child span").textContent.trim(), 10);
+                        const idB = parseInt(b.querySelector("td:first-child span").textContent.trim(), 10);
+                        return orden === "antiguos" ? idA - idB : idB - idA;
+                    });
+
+                    filas.forEach(fila => tbody.appendChild(fila));
+                }
+            });
+        });
+
+        @if (esAdmin)
+        {
+            <text>
+                let idEmpresaAEliminar = 0;
+
+                function abrirModalEditar(id, nombre, contacto, telefono) {
+                    document.getElementById('editEmpresaId').value = id;
+                    document.getElementById('editNombreEmpresa').value = nombre;
+                    document.getElementById('editNombreContacto').value = (contacto === "No especificado") ? "" : contacto;
+                    document.getElementById('editTelefonoContacto').value = (telefono === "N/A") ? "" : telefono;
+
+                    const modal = new bootstrap.Modal(document.getElementById('modalEditarEmpresa'));
+                    modal.show();
+                }
+
+                async function guardarEdicionEmpresa(e) {
+                    e.preventDefault();
+                    const btn = document.getElementById('btnGuardarEdicion');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Guardando...';
+
+                    const id = parseInt(document.getElementById('editEmpresaId').value, 10);
+                    const nombre = document.getElementById('editNombreEmpresa').value.trim();
+                    const contacto = document.getElementById('editNombreContacto').value.trim();
+                    const telefono = document.getElementById('editTelefonoContacto').value.trim();
+
+                    try {
+                        const resp = await fetch('/Panel/EditarEmpresaCliente', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                EmpresaID: id,
+                                NombreEmpresa: nombre,
+                                NombreContacto: contacto,
+                                TelefonoContacto: telefono
+                            })
+                        });
+
+                        if (resp.ok) {
+                            const fila = document.getElementById(`fila-empresa-${id}`);
+                            if (fila) {
+                                fila.querySelector('.campo-empresa').textContent = nombre;
+                                fila.querySelector('.campo-contacto').textContent = contacto || "No especificado";
+                                fila.querySelector('.campo-telefono').textContent = telefono || "N/A";
+                            }
+
+                            bootstrap.Modal.getInstance(document.getElementById('modalEditarEmpresa')).hide();
+                            mostrarToast("Empresa actualizada exitosamente.", "success");
+                        } else {
+                            mostrarToast("No se pudo actualizar la empresa.", "error");
+                        }
+                    } catch (err) {
+                        mostrarToast("Error de conexión al guardar cambios.", "error");
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Guardar Cambios';
+                    }
+                }
+
+                function abrirModalEliminar(id, nombre) {
+                    idEmpresaAEliminar = id;
+                    document.getElementById('empresaAEliminarNombre').innerText = nombre;
+                    const modal = new bootstrap.Modal(document.getElementById('modalEliminarEmpresaConfirm'));
+                    modal.show();
+                }
+
+                async function ejecutarEliminacionEmpresa() {
+                    const btn = document.getElementById('btnConfirmarEliminarEmpresa');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Eliminando...';
+
+                    try {
+                        const resp = await fetch(`/Panel/EliminarEmpresaCliente?id=${idEmpresaAEliminar}`, {
+                            method: 'POST'
+                        });
+
+                        if (resp.ok) {
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('modalEliminarEmpresaConfirm'));
+                            if (modal) modal.hide();
+
+                            const fila = document.getElementById(`fila-empresa-${idEmpresaAEliminar}`);
+                            if (fila) {
+                                fila.style.transition = 'all 0.3s ease';
+                                fila.style.opacity = '0';
+                                setTimeout(() => fila.remove(), 300);
+                            }
+                            mostrarToast("Empresa eliminada correctamente.", "success");
+                        } else {
+                            mostrarToast("No se pudo eliminar la empresa. Puede tener encuestas vinculadas.", "error");
+                        }
+                    } catch (err) {
+                        mostrarToast("Error de conexión al eliminar empresa.", "error");
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-trash-can me-1"></i> Eliminar';
+                    }
+                }
+            </text>
+        }
+    </script>
+}

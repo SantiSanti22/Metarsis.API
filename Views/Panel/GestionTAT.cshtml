@@ -1,0 +1,604 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var laminas = ViewBag.Laminas as List<Metarsis.Api.Models.LaminaTAT>;
+    var progresoEmpleados = ViewBag.ProgresoEmpleados as IEnumerable<dynamic>;
+    int totalActivas = ViewBag.TotalActivas ?? 0;
+}
+
+<style>
+    /* ENCABEZADOS DE PÁGINA */
+    .page-header-title {
+        color: #0B72B9;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+    [data-bs-theme="dark"] .page-header-title {
+        color: #38BDF8 !important;
+    }
+
+    .page-header-sub {
+        color: #64748B;
+        font-size: 0.88rem;
+    }
+    [data-bs-theme="dark"] .page-header-sub {
+        color: #94A3B8 !important;
+    }
+
+    /* BARRA DE BÚSQUEDA */
+    .search-box-tat {
+        width: 100%;
+        max-width: 260px;
+    }
+
+    .search-box-tat .input-group-text {
+        background-color: var(--av-surface) !important;
+        border-color: var(--av-border) !important;
+        color: var(--av-text-muted) !important;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .search-box-tat .form-control {
+        background-color: var(--av-surface) !important;
+        border-color: var(--av-border) !important;
+        color: var(--av-text-main) !important;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.86rem;
+    }
+
+    .search-box-tat .form-control:focus {
+        border-color: var(--av-primary) !important;
+        box-shadow: 0 0 0 2px rgba(24, 105, 179, 0.15) !important;
+    }
+
+    /* PESTAÑAS (NAV-TABS) */
+    .nav-tabs-avenzo {
+        border-bottom: 1px solid var(--av-border);
+    }
+    .nav-tabs-avenzo .nav-link {
+        color: var(--av-text-muted);
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-weight: 500;
+        font-size: 0.88rem;
+        padding: 0.75rem 1.25rem;
+        transition: all 0.2s ease;
+    }
+    .nav-tabs-avenzo .nav-link:hover {
+        color: var(--av-primary);
+    }
+    .nav-tabs-avenzo .nav-link.active {
+        color: var(--av-primary) !important;
+        background: transparent !important;
+        font-weight: 600;
+        border-bottom: 3px solid var(--av-primary) !important;
+    }
+
+    /* CONTENEDOR DE TABLA */
+    .tat-card {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background: var(--av-surface);
+        overflow: hidden;
+    }
+
+    /* ENCABEZADOS DE TABLA */
+    .tat-table thead tr th {
+        background-color: var(--av-pill-bg) !important;
+        border-bottom: 1px solid var(--av-border) !important;
+        color: var(--av-text-muted) !important;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 14px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .tat-table tbody tr {
+        border-bottom: 1px solid var(--av-border);
+        transition: background-color 0.15s ease;
+    }
+
+    .tat-table tbody tr:hover {
+        background-color: rgba(24, 105, 179, 0.02);
+    }
+    [data-bs-theme="dark"] .tat-table tbody tr:hover {
+        background-color: rgba(56, 189, 248, 0.03);
+    }
+
+    .tat-table tbody tr td {
+        padding: 12px 14px;
+        font-size: 0.86rem;
+    }
+
+    /* BADGE DE ESTATUS CON PUNTO INDICADOR */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+    }
+    .status-badge .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+    }
+    .status-badge.in-progress {
+        background-color: rgba(245, 158, 11, 0.12);
+        color: #D97706;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .status-badge.in-progress .dot {
+        background-color: #F59E0B;
+        box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
+    .status-badge.finished {
+        background-color: rgba(16, 185, 129, 0.12);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .status-badge.finished .dot {
+        background-color: #10B981;
+    }
+
+    [data-bs-theme="dark"] .status-badge.in-progress {
+        background-color: rgba(245, 158, 11, 0.18);
+        color: #FCD34D;
+        border-color: rgba(245, 158, 11, 0.35);
+    }
+    [data-bs-theme="dark"] .status-badge.finished {
+        background-color: rgba(16, 185, 129, 0.18);
+        color: #6EE7B7;
+        border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    /* BOTÓN VER HISTORIAS EN UNA LÍNEA */
+    .btn-action-historias {
+        background-color: var(--av-pill-bg);
+        color: var(--av-primary);
+        border: 1px solid var(--av-border);
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .btn-action-historias:hover:not(:disabled) {
+        background-color: var(--av-primary);
+        color: #FFFFFF !important;
+        border-color: var(--av-primary);
+        box-shadow: 0 2px 6px rgba(24, 105, 179, 0.25);
+    }
+    .btn-action-historias:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* BARRA DE PROGRESO FLUIDA */
+    .progress-custom {
+        height: 6px;
+        border-radius: 10px;
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        min-width: 90px;
+    }
+    .progress-bar-avenzo {
+        background-color: var(--av-primary) !important;
+        border-radius: 10px;
+    }
+
+    /* TARJETAS DE LÁMINAS */
+    .card-lamina {
+        border-radius: 12px;
+        border: 1px solid var(--av-border);
+        background-color: var(--av-surface);
+        transition: all 0.2s ease;
+        overflow: hidden;
+    }
+    .card-lamina:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+        border-color: var(--av-primary) !important;
+    }
+    .card-lamina-imgwrap {
+        background-color: var(--av-pill-bg);
+        border-bottom: 1px solid var(--av-border);
+    }
+
+    /* CAJA DE CADA HISTORIA EN EL MODAL */
+    .historia-item-box {
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+    }
+    .historia-item-box:hover {
+        border-color: var(--av-primary);
+    }
+
+    .historia-texto-box {
+        font-size: 0.88rem;
+        color: var(--av-text-main);
+        line-height: 1.5;
+        background-color: var(--av-surface);
+        border: 1px solid var(--av-border);
+        border-radius: 8px;
+        padding: 10px 12px;
+    }
+
+    /* MODALES INSTITUCIONALES */
+    .modal-avenzo .modal-content {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background-color: var(--av-surface);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    .modal-avenzo .modal-header {
+        border-bottom: 1px solid var(--av-border);
+        padding: 14px 18px;
+    }
+    .modal-avenzo .modal-footer {
+        border-top: 1px solid var(--av-border);
+        padding: 12px 18px;
+    }
+
+    .btn-modal-cancel {
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        color: var(--av-text-muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 7px 16px;
+        transition: all 0.2s ease;
+    }
+    .btn-modal-cancel:hover {
+        background-color: var(--av-surface);
+        color: var(--av-text-main);
+    }
+</style>
+
+<div class="container-fluid p-0">
+    <!-- ENCABEZADO DE MÓDULO Y BÚSQUEDA DINÁMICA POR TELÉFONO -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h4 class="page-header-title mb-1">
+                <i class="fa-solid fa-brain me-2"></i>Gestión de Prueba TAT
+            </h4>
+            <p class="page-header-sub mb-0">Configura las láminas activas y supervisa los resultados narrativos de los evaluados.</p>
+        </div>
+
+        <div class="d-flex align-items-center">
+            <!-- Buscador -->
+            <div class="search-box-tat">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fa-solid fa-magnifying-glass fa-sm"></i>
+                    </span>
+                    <input type="text" id="inputBuscarEmpleado" class="form-control"
+                           placeholder="Buscar teléfono..." />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑAS DE NAVEGACIÓN MODULAR (RESULTADOS VS CONFIGURACIÓN) -->
+    <ul class="nav nav-tabs nav-tabs-avenzo mb-4" id="tatTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab">
+                <i class="fa-solid fa-users me-2"></i>Resultados de Empleados
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link d-inline-flex align-items-center" id="laminas-tab" data-bs-toggle="tab" data-bs-target="#laminas" type="button" role="tab">
+                <i class="fa-solid fa-images me-2"></i>
+                <span>Configuración de Láminas</span>
+                <span class="badge ms-2" style="background-color: var(--av-pill-bg); color: var(--av-primary); border: 1px solid var(--av-border); font-size: 0.72rem; font-weight: 600;" id="contador-activas">
+                    @totalActivas Activas
+                </span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="tatTabContent">
+
+        <!-- PESTAÑA 1: RESULTADOS Y SEGUIMIENTO INDIVIDUAL -->
+        <div class="tab-pane fade show active" id="empleados" role="tabpanel">
+            <div class="card tat-card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table tat-table align-middle mb-0 w-100" id="tablaResultadosTAT">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4 py-3" style="width: 20%;">Empleado (Teléfono)</th>
+                                    <th class="py-3" style="width: 14%;">Evaluador</th>
+                                    <th class="py-3" style="width: 18%;">Fecha Asignación</th>
+                                    <th class="py-3" style="width: 22%;">Progreso</th>
+                                    <th class="py-3 text-center" style="width: 12%;">Estatus</th>
+                                    <th class="py-3 text-end pe-4" style="width: 14%;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (progresoEmpleados != null && progresoEmpleados.Any())
+                                {
+                                    foreach (var emp in progresoEmpleados)
+                                    {
+                                        bool esFinalizado = emp.Estatus == "Finalizado";
+                                        int respondidasCount = emp.Respuestas != null ? emp.Respuestas.Count : 0;
+
+                                        <tr class="fila-empleado-tat">
+                                            <!-- Teléfono -->
+                                            <td class="ps-4 columna-telefono">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                         style="background-color: var(--av-pill-bg); width: 32px; height: 32px; flex-shrink: 0; border: 1px solid var(--av-border);">
+                                                        <i class="fa-regular fa-user fa-xs" style="color: var(--av-primary);"></i>
+                                                    </div>
+                                                    <div>
+                                                        <span class="d-block font-monospace fw-semibold" style="color: var(--av-text-main); font-size: 0.85rem;">@emp.Telefono</span>
+                                                        <small class="text-secondary" style="font-size: 0.73rem;">GUID: @emp.GuidLink.ToString().Substring(0, 8)...</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <!-- Evaluador Responsable -->
+                                            <td>
+                                                <span class="badge" style="background-color: var(--av-pill-bg); color: var(--av-text-muted); border: 1px solid var(--av-border); font-weight: 500; font-size: 0.75rem;">
+                                                    <i class="fa-solid fa-user-check me-1" style="color: var(--av-primary);"></i>@emp.Evaluador
+                                                </span>
+                                            </td>
+
+                                            <!-- Fecha -->
+                                            <td class="text-secondary" style="font-size: 0.84rem; white-space: nowrap;">
+                                                @emp.Fecha.ToString("dd/MMM/yyyy HH:mm")
+                                            </td>
+
+                                            <!-- Progreso (sin saltos de línea para el 100%) -->
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2 mb-1" style="white-space: nowrap;">
+                                                    <div class="progress progress-custom flex-grow-1">
+                                                        <div class="progress-bar progress-bar-avenzo"
+                                                             role="progressbar"
+                                                             style="width: @emp.Porcentaje%;"></div>
+                                                    </div>
+                                                    <span class="fw-bold" style="font-size: 0.82rem; min-width: 44px; text-align: right; color: var(--av-text-main);">
+                                                        @emp.Porcentaje%
+                                                    </span>
+                                                </div>
+                                                <span class="text-secondary small d-block" style="font-size: 0.73rem; white-space: nowrap;">
+                                                    @respondidasCount de @totalActivas láminas
+                                                </span>
+                                            </td>
+
+                                            <!-- Badge de Estatus -->
+                                            <td class="text-center">
+                                                @if (esFinalizado)
+                                                {
+                                                    <span class="status-badge finished">
+                                                        <span class="dot"></span>
+                                                        <span>Finalizado</span>
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="status-badge in-progress">
+                                                        <span class="dot"></span>
+                                                        <span>En Progreso</span>
+                                                    </span>
+                                                }
+                                            </td>
+
+                                            <!-- Acciones (Ver Historias asegurado en 1 sola línea) -->
+                                            <td class="text-end pe-4" style="white-space: nowrap;">
+                                                <button class="btn-action-historias"
+                                                        onclick="verHistorias('@emp.AsignacionID', '@emp.Telefono')"
+                                                        @(respondidasCount == 0 ? "disabled" : "")
+                                                        title="Ver historias desarrolladas">
+                                                    <i class="fa-solid fa-book-open fa-xs"></i>
+                                                    <span>Ver Historias</span>
+                                                </button>
+
+                                                <!-- Contenedor oculto con historias para el modal -->
+                                                <div id="data-emp-@emp.AsignacionID" class="d-none">
+                                                    @if (emp.Respuestas != null)
+                                                    {
+                                                        foreach (var resp in emp.Respuestas)
+                                                        {
+                                                            <div class="historia-item-box d-flex gap-3 align-items-start">
+                                                                <img src="@resp.Lamina.UrlImagen"
+                                                                     alt="@resp.Lamina.NombreLamina"
+                                                                     class="rounded shadow-sm"
+                                                                     style="width: 105px; height: 95px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--av-border);">
+                                                                <div class="flex-grow-1">
+                                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                        <h6 class="fw-bold mb-0" style="color: var(--av-primary); font-size: 0.92rem;">@resp.Lamina.NombreLamina</h6>
+                                                                        <span class="text-secondary small" style="font-size: 0.75rem;">
+                                                                            <i class="fa-regular fa-clock me-1"></i>@resp.FechaRespuesta.ToString("dd/MM/yyyy HH:mm")
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="historia-texto-box mt-2">
+                                                                        "@resp.HistoriaTexto"
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5 text-muted">
+                                            <i class="fa-regular fa-folder-open fa-2x mb-2 d-block opacity-50"></i>
+                                            No hay pruebas asignadas actualmente.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 2: CATÁLOGO Y CONMUTACIÓN DE LÁMINAS  -->
+        <div class="tab-pane fade" id="laminas" role="tabpanel">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                @if (laminas != null && laminas.Any())
+                {
+                    foreach (var lamina in laminas)
+                    {
+                        <div class="col">
+                            <div class="card card-lamina shadow-sm h-100">
+                                <div class="p-3 text-center card-lamina-imgwrap">
+                                    <img src="@lamina.UrlImagen"
+                                         class="img-fluid rounded"
+                                         alt="@lamina.NombreLamina"
+                                         style="height: 180px; width: 100%; object-fit: contain;">
+                                </div>
+                                <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0 fw-bold" style="color: var(--av-text-main); font-size: 0.92rem;">@lamina.NombreLamina</h6>
+                                        <span class="text-secondary small" style="font-size: 0.75rem;">Lámina Proyectiva</span>
+                                    </div>
+                                    <div class="form-check form-switch m-0">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                               style="width: 2.3rem; height: 1.2rem; cursor: pointer;"
+                                               id="switch-@lamina.LaminaID"
+                                               @(lamina.Activa ? "checked" : "")
+                                               onchange="toggleLamina(@lamina.LaminaID)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: REPORTE NARRATIVO Y RELATOS CAPTURADOS  -->
+<div class="modal fade modal-avenzo" id="modalHistorias" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="background-color: rgba(24, 105, 179, 0.12); width: 32px; height: 32px;">
+                        <i class="fa-solid fa-book-open fa-sm" style="color: var(--av-primary);"></i>
+                    </div>
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0" style="color: var(--av-text-main);">Reporte Narrativo del Empleado</h6>
+                        <span class="text-secondary small" id="subtituloModalTelefono" style="font-size: 0.75rem;"></span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4" id="modalHistoriasBody">
+                <!-- Se llena dinámicamente con JS -->
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modal-cancel px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NOTIFICADOR TOAST FLOTANTE PARA MENSAJES DE ESTADO -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+    <div id="appToast" class="toast align-items-center text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 10px;">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="appToastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function mostrarToast(mensaje, tipo = 'success') {
+            const toastEl = document.getElementById('appToast');
+            const toastMsg = document.getElementById('appToastMessage');
+            
+            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-dark', 'text-white');
+            
+            if (tipo === 'success') {
+                toastEl.style.backgroundColor = '#059669';
+                toastEl.classList.add('text-white');
+                toastMsg.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> ${mensaje}`;
+            } else if (tipo === 'error') {
+                toastEl.style.backgroundColor = '#DC2626';
+                toastEl.classList.add('text-white');
+                toastMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation me-2"></i> ${mensaje}`;
+            } else {
+                toastEl.style.backgroundColor = '#D97706';
+                toastEl.classList.add('text-white');
+                toastMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i> ${mensaje}`;
+            }
+
+            const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+            toast.show();
+        }
+
+        document.getElementById('inputBuscarEmpleado')?.addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+            const filas = document.querySelectorAll('.fila-empleado-tat');
+
+            filas.forEach(fila => {
+                const telefono = fila.querySelector('.columna-telefono')?.textContent.toLowerCase() || '';
+                fila.style.display = telefono.includes(query) ? '' : 'none';
+            });
+        });
+
+        async function toggleLamina(id) {
+            const checkbox = document.getElementById(`switch-${id}`);
+            try {
+                const response = await fetch(`/api/PruebaTAT/toggle-lamina/${id}`, { method: 'POST' });
+                if (response.ok) {
+                    mostrarToast('Estado de lámina actualizado.', 'success');
+                } else {
+                    checkbox.checked = !checkbox.checked;
+                    mostrarToast('Error al actualizar la lámina.', 'error');
+                }
+            } catch (error) {
+                checkbox.checked = !checkbox.checked;
+                mostrarToast('Error de conexión con el servidor.', 'error');
+            }
+        }
+
+        function verHistorias(asignacionId, telefono = '') {
+            const contenedorDatos = document.getElementById(`data-emp-${asignacionId}`);
+            const modalBody = document.getElementById('modalHistoriasBody');
+            const subtitulo = document.getElementById('subtituloModalTelefono');
+
+            if (subtitulo) {
+                subtitulo.innerText = telefono ? `Respuestas registradas del teléfono: ${telefono}` : '';
+            }
+
+            modalBody.innerHTML = contenedorDatos ? contenedorDatos.innerHTML : '<div class="text-center py-4 text-muted">No se encontraron historias.</div>';
+
+            const modal = new bootstrap.Modal(document.getElementById('modalHistorias'));
+            modal.show();
+        }
+    </script>
+}

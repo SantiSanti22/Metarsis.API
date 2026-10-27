@@ -1,0 +1,862 @@
+﻿@model List<Metarsis.Api.Models.Usuario>
+@{
+    ViewData["Title"] = "Gestión de Equipo - Avenzo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* ENCABEZADOS DE PÁGINA */
+    .page-header-title {
+        color: #0B72B9;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+    [data-bs-theme="dark"] .page-header-title {
+        color: #38BDF8 !important;
+    }
+
+    .page-header-sub {
+        color: #64748B;
+        font-size: 0.88rem;
+    }
+    [data-bs-theme="dark"] .page-header-sub {
+        color: #94A3B8 !important;
+    }
+
+    /* BOTÓN PRIMARIO OFICIAL */
+    .btn-avenzo-main {
+        background-color: var(--av-primary);
+        color: #FFFFFF;
+        border: 1px solid var(--av-primary);
+        font-weight: 600;
+        border-radius: 8px;
+        font-size: 0.84rem;
+        padding: 6px 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+    .btn-avenzo-main:hover {
+        opacity: 0.92;
+        color: #FFFFFF !important;
+        box-shadow: 0 3px 8px rgba(24, 105, 179, 0.25);
+    }
+
+    /* CONTENEDOR DE TABLA */
+    .usuarios-card {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background: var(--av-surface);
+        overflow: hidden;
+    }
+
+    /* ENCABEZADOS DE TABLA */
+    .usuarios-table thead tr th {
+        background-color: var(--av-pill-bg) !important;
+        border-bottom: 1px solid var(--av-border) !important;
+        color: var(--av-text-muted) !important;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 14px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .usuarios-table tbody tr {
+        border-bottom: 1px solid var(--av-border);
+        transition: background-color 0.15s ease;
+    }
+
+    .usuarios-table tbody tr:hover {
+        background-color: rgba(24, 105, 179, 0.02);
+    }
+    [data-bs-theme="dark"] .usuarios-table tbody tr:hover {
+        background-color: rgba(56, 189, 248, 0.03);
+    }
+
+    .usuarios-table tbody tr td {
+        padding: 12px 14px;
+        font-size: 0.86rem;
+    }
+
+    /* BADGES DE ESTATUS CON DOT INDICADOR */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+    }
+    .status-badge .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+    }
+    .status-badge.active {
+        background-color: rgba(16, 185, 129, 0.12);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .status-badge.active .dot {
+        background-color: #10B981;
+    }
+    .status-badge.inactive {
+        background-color: rgba(239, 68, 68, 0.12);
+        color: #DC2626;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .status-badge.inactive .dot {
+        background-color: #EF4444;
+    }
+
+    [data-bs-theme="dark"] .status-badge.active {
+        background-color: rgba(16, 185, 129, 0.18);
+        color: #6EE7B7;
+        border-color: rgba(16, 185, 129, 0.35);
+    }
+    [data-bs-theme="dark"] .status-badge.inactive {
+        background-color: rgba(239, 68, 68, 0.18);
+        color: #FCA5A5;
+        border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    /* BADGES DE ROLES */
+    .badge-role-admin {
+        background-color: rgba(24, 105, 179, 0.12);
+        color: var(--av-primary);
+        border: 1px solid rgba(24, 105, 179, 0.25);
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 3px 9px;
+        border-radius: 6px;
+    }
+    .badge-role-consultor {
+        background-color: rgba(147, 51, 234, 0.12);
+        color: #9333EA;
+        border: 1px solid rgba(147, 51, 234, 0.25);
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 3px 9px;
+        border-radius: 6px;
+    }
+    [data-bs-theme="dark"] .badge-role-consultor {
+        color: #C084FC;
+        border-color: rgba(192, 132, 252, 0.35);
+    }
+
+    /* BOTONES DE ACCIÓN COMPACTOS */
+    .btn-action-icon-avenzo {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        border: 1px solid var(--av-border);
+        background-color: var(--av-pill-bg);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    .btn-usr-edit {
+        color: var(--av-primary);
+    }
+    .btn-usr-edit:hover {
+        background-color: var(--av-primary);
+        color: #FFFFFF !important;
+        border-color: var(--av-primary);
+        box-shadow: 0 2px 6px rgba(24, 105, 179, 0.25);
+    }
+    .btn-usr-toggle {
+        color: var(--av-text-muted);
+    }
+    .btn-usr-toggle:hover {
+        background-color: var(--av-surface);
+        color: var(--av-text-main) !important;
+        border-color: var(--av-text-muted);
+    }
+    .btn-usr-del {
+        color: #EF4444;
+    }
+    .btn-usr-del:hover {
+        background-color: #EF4444;
+        color: #FFFFFF !important;
+        border-color: #EF4444;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+    }
+
+    /* MODALES INSTITUCIONALES COMPACTOS */
+    .modal-avenzo .modal-content {
+        border-radius: 12px;
+        border: 1px solid var(--av-border);
+        background-color: var(--av-surface);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    .modal-avenzo .modal-header {
+        border-bottom: 1px solid var(--av-border);
+        padding: 10px 16px;
+    }
+    .modal-avenzo .modal-body {
+        padding: 14px 18px !important;
+    }
+    .modal-avenzo .modal-footer {
+        border-top: 1px solid var(--av-border);
+        padding: 10px 16px;
+    }
+
+    .modal-avenzo .form-control, .modal-avenzo .form-select {
+        background-color: var(--av-pill-bg);
+        border-color: var(--av-border);
+        color: var(--av-text-main);
+        border-radius: 6px;
+        font-size: 0.85rem;
+        padding: 6px 11px;
+    }
+    .modal-avenzo .form-control:focus, .modal-avenzo .form-select:focus {
+        border-color: var(--av-primary);
+        box-shadow: 0 0 0 2px rgba(24, 105, 179, 0.15);
+    }
+
+    .btn-modal-cancel {
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        color: var(--av-text-muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 6px 14px;
+        transition: all 0.2s ease;
+    }
+    .btn-modal-cancel:hover {
+        background-color: var(--av-surface);
+        color: var(--av-text-main);
+    }
+
+    .btn-modal-save {
+        background-color: var(--av-primary);
+        border: 1px solid var(--av-primary);
+        color: #FFFFFF;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 6px;
+        padding: 6px 14px;
+        transition: all 0.2s ease;
+    }
+    .btn-modal-save:hover {
+        opacity: 0.92;
+        color: #FFFFFF !important;
+    }
+</style>
+
+<div class="container-fluid p-0">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h4 class="page-header-title mb-1">
+                <i class="fa-solid fa-users-gear me-2"></i>Gestión de Equipo y Consultores
+            </h4>
+            <p class="page-header-sub mb-0">Administra, edita y da de alta a los evaluadores autorizados en Avenzo.</p>
+        </div>
+
+        <button class="btn-avenzo-main" data-bs-toggle="modal" data-bs-target="#modalNuevoUsuario">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Nuevo Consultor</span>
+        </button>
+    </div>
+
+    
+    <div class="card usuarios-card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 usuarios-table" id="tablaUsuarios">
+                    <thead>
+                        <tr>
+                            <th class="ps-4 py-3" style="width: 25%;">Usuario / Consultor</th>
+                            <th class="py-3" style="width: 23%;">Correo Electrónico</th>
+                            <th class="py-3" style="width: 18%;">WhatsApp de Alertas</th>
+                            <th class="py-3 text-center" style="width: 12%;">Rol</th>
+                            <th class="py-3 text-center" style="width: 10%;">Estatus</th>
+                            <th class="py-3 text-end pe-4" style="width: 12%;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var u in Model)
+                            {
+                                <tr id="fila-usuario-@u.UsuarioID">
+                                    <!-- Nombre -->
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                 style="background-color: var(--av-pill-bg); width: 32px; height: 32px; flex-shrink: 0; border: 1px solid var(--av-border);">
+                                                <i class="fa-solid fa-user-tie fa-xs" style="color: var(--av-primary);"></i>
+                                            </div>
+                                            <span class="fw-semibold campo-nombre" style="color: var(--av-text-main);">@u.NombreCompleto</span>
+                                        </div>
+                                    </td>
+
+                                    <!-- Correo -->
+                                    <td class="text-secondary campo-correo">@u.Correo</td>
+
+                                    <!-- WhatsApp -->
+                                    <td>
+                                        <span class="badge font-monospace campo-telefono" style="background-color: var(--av-pill-bg); color: var(--av-text-main); border: 1px solid var(--av-border); font-size: 0.78rem; font-weight: 500;">
+                                            <i class="fa-brands fa-whatsapp text-success me-1"></i>@(string.IsNullOrEmpty(u.TelefonoWhatsApp) ? "Sin registrar" : u.TelefonoWhatsApp)
+                                        </span>
+                                    </td>
+
+                                    <!-- Rol -->
+                                    <td class="text-center campo-rol">
+                                        @if (u.Rol == "Admin")
+                                        {
+                                            <span class="badge-role-admin">
+                                                Administrador
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-role-consultor">
+                                                Consultor
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <!-- Estado -->
+                                    <td class="text-center">
+                                        @if (u.Activo)
+                                        {
+                                            <span class="status-badge active">
+                                                <span class="dot"></span>
+                                                <span>Activo</span>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="status-badge inactive">
+                                                <span class="dot"></span>
+                                                <span>Inactivo</span>
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <!-- Acciones: Editar, Toggle Estado, Eliminar -->
+                                    <td class="text-end pe-4" style="white-space: nowrap;">
+                                        <div class="d-inline-flex gap-2">
+                                            <!-- Editar -->
+                                            <button type="button" class="btn-action-icon-avenzo btn-usr-edit" title="Editar usuario"
+                                                    onclick="abrirModalEditar(@u.UsuarioID, '@Html.Raw(u.NombreCompleto)', '@u.Correo', '@u.TelefonoWhatsApp', '@u.Rol')">
+                                                <i class="fa-solid fa-pen-to-square fa-xs"></i>
+                                            </button>
+
+                                            <!-- Activar / Desactivar -->
+                                            <button type="button" class="btn-action-icon-avenzo btn-usr-toggle" 
+                                                    title="@(u.Activo ? "Desactivar usuario" : "Activar usuario")"
+                                                    onclick="abrirModalToggle(@u.UsuarioID, '@Html.Raw(u.NombreCompleto)', @u.Activo.ToString().ToLower())">
+                                                <i class="fa-solid fa-power-off fa-xs @(u.Activo ? "text-success" : "text-muted")"></i>
+                                            </button>
+
+                                            <!-- Eliminar -->
+                                            <button type="button" class="btn-action-icon-avenzo btn-usr-del" title="Eliminar usuario"
+                                                    onclick="abrirModalEliminarUsuario(@u.UsuarioID, '@Html.Raw(u.NombreCompleto)')">
+                                                <i class="fa-regular fa-trash-can fa-xs"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="fa-solid fa-users fa-2x mb-2 d-block opacity-50"></i>
+                                    No hay consultores registrados actualmente.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 1. MODAL: ALTA DE NUEVO CONSULTOR / USUARIO -->
+<div class="modal fade modal-avenzo" id="modalNuevoUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="background-color: rgba(24, 105, 179, 0.12); width: 30px; height: 30px;">
+                        <i class="fa-solid fa-user-plus fa-sm" style="color: var(--av-primary);"></i>
+                    </div>
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0" style="color: var(--av-text-main); font-size: 0.92rem;">Nuevo Consultor / Evaluador</h6>
+                        <span class="text-secondary small" style="font-size: 0.73rem;">Registra un nuevo miembro del equipo</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold text-secondary mb-1">Nombre Completo <span class="text-danger">*</span></label>
+                    <input type="text" id="inputNombre" class="form-control" placeholder="Ej. Lic. Carlos Mendoza" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold text-secondary mb-1">Correo Electrónico <span class="text-danger">*</span></label>
+                    <input type="email" id="inputCorreo" class="form-control" placeholder="carlos@avenzo.com" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold text-secondary mb-1">Contraseña Inicial <span class="text-danger">*</span></label>
+                    <input type="password" id="inputPassword" class="form-control" placeholder="••••••••" required />
+                </div>
+                
+                <!-- SELECTOR DE LADA (SIN 'MX') Y TELÉFONO -->
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold text-secondary mb-1">WhatsApp para Notificaciones <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <select id="selectLadaNuevo" class="form-select" style="max-width: 140px; font-size: 0.83rem;">
+                            <option value="+52" selected>México (+52)</option>
+                            <option value="+1">EE.UU. / CA (+1)</option>
+                            <option value="+57">Colombia (+57)</option>
+                            <option value="+54">Argentina (+54)</option>
+                            <option value="+56">Chile (+56)</option>
+                            <option value="+51">Perú (+51)</option>
+                            <option value="+502">Guatemala (+502)</option>
+                            <option value="+503">El Salvador (+503)</option>
+                            <option value="+504">Honduras (+504)</option>
+                            <option value="+505">Nicaragua (+505)</option>
+                            <option value="+506">Costa Rica (+506)</option>
+                            <option value="+507">Panamá (+507)</option>
+                            <option value="+593">Ecuador (+593)</option>
+                            <option value="+591">Bolivia (+591)</option>
+                            <option value="+595">Paraguay (+595)</option>
+                            <option value="+598">Uruguay (+598)</option>
+                            <option value="+34">España (+34)</option>
+                            <option value="+58">Venezuela (+58)</option>
+                            <option value="+55">Brasil (+55)</option>
+                        </select>
+                        <input type="tel" id="inputWhatsAppNuevo" class="form-control font-monospace" placeholder="6641234567" required />
+                    </div>
+                </div>
+
+                <div class="mb-1">
+                    <label class="form-label small fw-semibold text-secondary mb-1">Rol asignado</label>
+                    <select id="selectRol" class="form-select">
+                        <option value="Consultor" selected>Consultor / Evaluador (Solo ve sus encuestas)</option>
+                        <option value="Admin">Administrador (Control total)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-modal-save" id="btnGuardarUsuario" onclick="guardarNuevoUsuario()">
+                    <i class="fa-solid fa-check me-1"></i> Registrar Usuario
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. MODAL: EDICIÓN DE DATOS DEL USUARIO -->
+<div class="modal fade modal-avenzo" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="background-color: rgba(24, 105, 179, 0.12); width: 30px; height: 30px;">
+                        <i class="fa-solid fa-user-pen fa-sm" style="color: var(--av-primary);"></i>
+                    </div>
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0" style="color: var(--av-text-main); font-size: 0.92rem;">Editar Consultor / Usuario</h6>
+                        <span class="text-secondary small" style="font-size: 0.73rem;">Actualiza sus credenciales o datos de contacto</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="editUsuarioId" />
+
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold text-secondary mb-1">Nombre Completo <span class="text-danger">*</span></label>
+                    <input type="text" id="editNombre" class="form-control" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold text-secondary mb-1">Correo Electrónico <span class="text-danger">*</span></label>
+                    <input type="email" id="editCorreo" class="form-control" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold text-secondary mb-1">Nueva Contraseña (Opcional)</label>
+                    <input type="password" id="editPassword" class="form-control" placeholder="Dejar en blanco para mantener la actual" />
+                </div>
+
+                <!-- SELECTOR DE LADA (SIN 'MX') EN EDICIÓN -->
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold text-secondary mb-1">WhatsApp para Notificaciones <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <select id="selectLadaEdit" class="form-select" style="max-width: 140px; font-size: 0.83rem;">
+                            <option value="+52">México (+52)</option>
+                            <option value="+1">EE.UU. / CA (+1)</option>
+                            <option value="+57">Colombia (+57)</option>
+                            <option value="+54">Argentina (+54)</option>
+                            <option value="+56">Chile (+56)</option>
+                            <option value="+51">Perú (+51)</option>
+                            <option value="+502">Guatemala (+502)</option>
+                            <option value="+503">El Salvador (+503)</option>
+                            <option value="+504">Honduras (+504)</option>
+                            <option value="+505">Nicaragua (+505)</option>
+                            <option value="+506">Costa Rica (+506)</option>
+                            <option value="+507">Panamá (+507)</option>
+                            <option value="+593">Ecuador (+593)</option>
+                            <option value="+591">Bolivia (+591)</option>
+                            <option value="+595">Paraguay (+595)</option>
+                            <option value="+598">Uruguay (+598)</option>
+                            <option value="+34">España (+34)</option>
+                            <option value="+58">Venezuela (+58)</option>
+                            <option value="+55">Brasil (+55)</option>
+                        </select>
+                        <input type="tel" id="editWhatsApp" class="form-control font-monospace" placeholder="6641234567" required />
+                    </div>
+                </div>
+
+                <div class="mb-1">
+                    <label class="form-label small fw-semibold text-secondary mb-1">Rol asignado</label>
+                    <select id="editRol" class="form-select">
+                        <option value="Consultor">Consultor / Evaluador (Solo ve sus encuestas)</option>
+                        <option value="Admin">Administrador (Control total)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-modal-save" id="btnActualizarUsuario" onclick="guardarEdicionUsuario()">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. MODAL: CONFIRMACIÓN PARA ALTERNAR ESTADO -->
+<div class="modal fade modal-avenzo" id="modalToggleUsuarioConfirm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                     style="background-color: rgba(24, 105, 179, 0.12); width: 52px; height: 52px;">
+                    <i class="fa-solid fa-power-off fa-lg" style="color: var(--av-primary);"></i>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: var(--av-text-main);">¿Cambiar estatus del usuario?</h5>
+                <p class="text-secondary small mb-4" style="line-height: 1.5;">
+                    ¿Deseas alternar el estatus de acceso de <strong id="toggleUsuarioNombre" style="color: var(--av-text-main);"></strong>?
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-modal-cancel px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-modal-save px-3 py-2" id="btnConfirmarToggle" onclick="ejecutarToggleUsuario()">
+                        <i class="fa-solid fa-check me-1"></i> Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. MODAL: CONFIRMACIÓN DE ELIMINACIÓN PERMANENTE -->
+<div class="modal fade modal-avenzo" id="modalEliminarUsuarioConfirm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                     style="background-color: rgba(239, 68, 68, 0.12); width: 52px; height: 52px;">
+                    <i class="fa-solid fa-triangle-exclamation fa-lg" style="color: #EF4444;"></i>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: var(--av-text-main);">¿Eliminar usuario?</h5>
+                <p class="text-secondary small mb-4" style="line-height: 1.5;">
+                    ¿Estás seguro de eliminar permanentemente a <strong id="usuarioAEliminarNombre" style="color: var(--av-text-main);"></strong>?<br />
+                    <span class="text-danger fw-semibold" style="font-size: 0.78rem;">Esta acción no se puede deshacer.</span>
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-modal-cancel px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger px-3 py-2 fw-medium shadow-sm"
+                            id="btnConfirmarEliminarUsuario"
+                            style="border-radius: 6px; font-size: 0.82rem;"
+                            onclick="ejecutarEliminacionUsuario()">
+                        <i class="fa-solid fa-trash-can me-1"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- COMPONENTE TOAST PARA NOTIFICACIONES ASÍNCRONAS EN PANTALLA -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+    <div id="appToast" class="toast align-items-center text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 10px;">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="appToastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let usuarioIdAEliminar = 0;
+    let usuarioIdAToggle = 0;
+
+    function mostrarToast(mensaje, tipo = 'success') {
+        const toastEl = document.getElementById('appToast');
+        const toastMsg = document.getElementById('appToastMessage');
+        
+        toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-dark', 'text-white');
+        
+        if (tipo === 'success') {
+            toastEl.style.backgroundColor = '#059669';
+            toastEl.classList.add('text-white');
+            toastMsg.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> ${mensaje}`;
+        } else if (tipo === 'error') {
+            toastEl.style.backgroundColor = '#DC2626';
+            toastEl.classList.add('text-white');
+            toastMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation me-2"></i> ${mensaje}`;
+        } else {
+            toastEl.style.backgroundColor = '#D97706';
+            toastEl.classList.add('text-white');
+            toastMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i> ${mensaje}`;
+        }
+
+        const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+        toast.show();
+    }
+
+   
+    async function guardarNuevoUsuario() {
+        const nombre = document.getElementById('inputNombre').value.trim();
+        const correo = document.getElementById('inputCorreo').value.trim();
+        const password = document.getElementById('inputPassword').value.trim();
+        const lada = document.getElementById('selectLadaNuevo').value;
+        const numLocal = document.getElementById('inputWhatsAppNuevo').value.trim().replace(/\D/g, '');
+        const rol = document.getElementById('selectRol').value;
+        const btn = document.getElementById('btnGuardarUsuario');
+
+        if (!nombre || !correo || !password || !numLocal) {
+            mostrarToast('Por favor completa todos los campos obligatorios.', 'warning');
+            return;
+        }
+
+        const telefonoCompleto = `${lada}${numLocal}`;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Registrando...';
+
+        try {
+            const resp = await fetch('/Panel/CrearUsuario', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    NombreCompleto: nombre,
+                    Correo: correo,
+                    PasswordHash: password,
+                    TelefonoWhatsApp: telefonoCompleto,
+                    Rol: rol
+                })
+            });
+
+            const data = await resp.json();
+
+            if (data.exito) {
+                mostrarToast('Usuario registrado correctamente.', 'success');
+                setTimeout(() => location.reload(), 900);
+            } else {
+                mostrarToast(data.mensaje || 'Error al guardar el usuario.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Registrar Usuario';
+            }
+        } catch (err) {
+            mostrarToast('Error de conexión con el servidor.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Registrar Usuario';
+        }
+    }
+
+    
+    function abrirModalEditar(id, nombre, correo, telefono, rol) {
+        document.getElementById('editUsuarioId').value = id;
+        document.getElementById('editNombre').value = nombre;
+        document.getElementById('editCorreo').value = correo;
+        document.getElementById('editPassword').value = '';
+        document.getElementById('editRol').value = rol || 'Consultor';
+
+        const selectLada = document.getElementById('selectLadaEdit');
+        const inputNum = document.getElementById('editWhatsApp');
+        
+        let telLimpio = (telefono || '').trim();
+        let ladaDetectada = '+52';
+        let numeroSinLada = telLimpio;
+
+        if (telLimpio.startsWith('+')) {
+            for (let option of selectLada.options) {
+                if (telLimpio.startsWith(option.value)) {
+                    ladaDetectada = option.value;
+                    numeroSinLada = telLimpio.substring(option.value.length);
+                    break;
+                }
+            }
+        }
+
+        selectLada.value = ladaDetectada;
+        inputNum.value = numeroSinLada.replace(/\D/g, '');
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditarUsuario'));
+        modal.show();
+    }
+
+   
+    async function guardarEdicionUsuario() {
+        const id = parseInt(document.getElementById('editUsuarioId').value, 10);
+        const nombre = document.getElementById('editNombre').value.trim();
+        const correo = document.getElementById('editCorreo').value.trim();
+        const password = document.getElementById('editPassword').value.trim();
+        const lada = document.getElementById('selectLadaEdit').value;
+        const numLocal = document.getElementById('editWhatsApp').value.trim().replace(/\D/g, '');
+        const rol = document.getElementById('editRol').value;
+        const btn = document.getElementById('btnActualizarUsuario');
+
+        if (!nombre || !correo || !numLocal) {
+            mostrarToast('El nombre, correo y teléfono son obligatorios.', 'warning');
+            return;
+        }
+
+        const telefonoCompleto = `${lada}${numLocal}`;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        try {
+            const resp = await fetch('/Panel/EditarUsuario', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    UsuarioID: id,
+                    NombreCompleto: nombre,
+                    Correo: correo,
+                    PasswordHash: password,
+                    TelefonoWhatsApp: telefonoCompleto,
+                    Rol: rol
+                })
+            });
+
+            const data = await resp.json();
+
+            if (data.exito) {
+                const fila = document.getElementById(`fila-usuario-${id}`);
+                if (fila) {
+                    fila.querySelector('.campo-nombre').textContent = nombre;
+                    fila.querySelector('.campo-correo').textContent = correo;
+                    fila.querySelector('.campo-telefono').innerHTML = `<i class="fa-brands fa-whatsapp text-success me-1"></i>${telefonoCompleto}`;
+                    fila.querySelector('.campo-rol').innerHTML = rol === "Admin" 
+                        ? `<span class="badge-role-admin">Administrador</span>` 
+                        : `<span class="badge-role-consultor">Consultor</span>`;
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario')).hide();
+                mostrarToast('Usuario actualizado exitosamente.', 'success');
+            } else {
+                mostrarToast(data.mensaje || 'Error al actualizar el usuario.', 'error');
+            }
+        } catch (err) {
+            mostrarToast('Error de conexión al intentar guardar.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Guardar Cambios';
+        }
+    }
+
+    
+    function abrirModalToggle(id, nombre, estadoActual) {
+        usuarioIdAToggle = id;
+        document.getElementById('toggleUsuarioNombre').innerText = nombre;
+        const modal = new bootstrap.Modal(document.getElementById('modalToggleUsuarioConfirm'));
+        modal.show();
+    }
+
+    async function ejecutarToggleUsuario() {
+        const btn = document.getElementById('btnConfirmarToggle');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Procesando...';
+
+        try {
+            const resp = await fetch(`/Panel/ToggleEstadoUsuario?id=${usuarioIdAToggle}`, { method: 'POST' });
+            const data = await resp.json();
+
+            if (data.exito) {
+                const modalEl = document.getElementById('modalToggleUsuarioConfirm');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+                
+                mostrarToast('Estatus actualizado correctamente.', 'success');
+                setTimeout(() => location.reload(), 900);
+            } else {
+                mostrarToast(data.mensaje || 'Error al cambiar estatus.', 'error');
+            }
+        } catch (err) {
+            mostrarToast('Error de conexión al cambiar estatus.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Confirmar';
+        }
+    }
+
+   
+    function abrirModalEliminarUsuario(id, nombre) {
+        usuarioIdAEliminar = id;
+        document.getElementById('usuarioAEliminarNombre').innerText = nombre;
+        const modal = new bootstrap.Modal(document.getElementById('modalEliminarUsuarioConfirm'));
+        modal.show();
+    }
+
+    async function ejecutarEliminacionUsuario() {
+        const btn = document.getElementById('btnConfirmarEliminarUsuario');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Eliminando...';
+
+        try {
+            const resp = await fetch(`/Panel/EliminarUsuario?id=${usuarioIdAEliminar}`, { method: 'POST' });
+            const data = await resp.json();
+
+            if (data.exito) {
+                const modalEl = document.getElementById('modalEliminarUsuarioConfirm');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+
+                const fila = document.getElementById(`fila-usuario-${usuarioIdAEliminar}`);
+                if (fila) {
+                    fila.style.transition = 'all 0.3s ease';
+                    fila.style.opacity = '0';
+                    setTimeout(() => fila.remove(), 300);
+                }
+                mostrarToast('Usuario eliminado correctamente.', 'success');
+            } else {
+                mostrarToast(data.mensaje || 'Error al eliminar el usuario.', 'error');
+            }
+        } catch (err) {
+            mostrarToast('Error al conectar con el servidor.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-trash-can me-1"></i> Eliminar';
+        }
+    }
+</script>
+}

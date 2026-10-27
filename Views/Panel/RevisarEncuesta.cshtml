@@ -1,0 +1,998 @@
+﻿@model Metarsis.Api.Models.Encuesta
+@{
+    ViewData["Title"] = "Revisión de Encuesta";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var preguntas = ViewBag.Preguntas as List<Metarsis.Api.Models.PreguntaEncuesta>;
+    var respuestasAgrupadas = ViewBag.RespuestasEmpleados as IEnumerable<IGrouping<string, dynamic>>;
+    int totalParticipantes = respuestasAgrupadas != null ? respuestasAgrupadas.Count() : 0;
+    bool estaCerrada = !Model.EstaActiva || (Model.FechaCierre != DateTime.MinValue && Model.FechaCierre.Date < DateTime.Now.Date);
+}
+
+<style>
+    /* ENCABEZADOS Y METADATOS DE CABECERA */
+    .encuesta-header-card {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background-color: var(--av-surface);
+    }
+
+    .btn-nav-back {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        color: var(--av-text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .btn-nav-back:hover {
+        background-color: var(--av-surface);
+        border-color: var(--av-primary);
+        color: var(--av-primary);
+    }
+
+    .icon-header-badge {
+        background-color: var(--av-sidebar-active-bg);
+        color: var(--av-primary);
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .empresa-title {
+        color: var(--av-text-main);
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        font-size: 1.25rem;
+    }
+
+    .meta-item {
+        font-size: 0.84rem;
+        color: var(--av-text-muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .meta-item strong {
+        color: var(--av-text-main);
+    }
+
+    /* BADGE DE ESTATUS HOMOLOGADO (CON DOT) */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        letter-spacing: 0.2px;
+    }
+    .status-badge .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+    }
+    .status-badge.in-progress {
+        background-color: rgba(245, 158, 11, 0.12);
+        color: #D97706;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .status-badge.in-progress .dot {
+        background-color: #F59E0B;
+        box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
+    .status-badge.finished {
+        background-color: rgba(16, 185, 129, 0.12);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .status-badge.finished .dot {
+        background-color: #10B981;
+    }
+
+    [data-bs-theme="dark"] .status-badge.in-progress {
+        background-color: rgba(245, 158, 11, 0.18);
+        color: #FCD34D;
+        border-color: rgba(245, 158, 11, 0.35);
+    }
+    [data-bs-theme="dark"] .status-badge.finished {
+        background-color: rgba(16, 185, 129, 0.18);
+        color: #6EE7B7;
+        border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    /* BOTÓN PUBLICAR WHATSAPP */
+    .btn-publicar-whatsapp {
+        background-color: #10B981;
+        color: #FFFFFF;
+        border: 1px solid #10B981;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);
+    }
+    .btn-publicar-whatsapp:hover {
+        background-color: #059669;
+        border-color: #059669;
+        color: #FFFFFF;
+        transform: translateY(-1px);
+    }
+
+    /* PESTAÑAS (NAV-TABS) */
+    .nav-tabs-avenzo {
+        border-bottom: 1px solid var(--av-border);
+    }
+    .nav-tabs-avenzo .nav-link {
+        color: var(--av-text-muted);
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-weight: 500;
+        font-size: 0.88rem;
+        padding: 0.75rem 1.25rem;
+        transition: all 0.2s ease;
+    }
+    .nav-tabs-avenzo .nav-link:hover {
+        color: var(--av-primary);
+    }
+    .nav-tabs-avenzo .nav-link.active {
+        color: var(--av-primary) !important;
+        background: transparent !important;
+        font-weight: 600;
+        border-bottom: 3px solid var(--av-primary) !important;
+    }
+
+    /* TARJETA DE CONTENIDO */
+    .section-card {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background: var(--av-surface);
+        overflow: hidden;
+    }
+    .section-card-header {
+        background-color: var(--av-surface);
+        border-bottom: 1px solid var(--av-border);
+        padding: 12px 18px;
+    }
+
+    /* BOTONES DE ACCIÓN PARA PREGUNTAS */
+    .btn-add-manual {
+        background-color: var(--av-pill-bg);
+        color: var(--av-primary);
+        border: 1px solid var(--av-border);
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s ease;
+    }
+    .btn-add-manual:hover {
+        background-color: var(--av-primary);
+        color: #FFFFFF;
+        border-color: var(--av-primary);
+    }
+
+    .btn-action-icon {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: 1px solid var(--av-border);
+        background-color: var(--av-pill-bg);
+        transition: all 0.2s ease;
+    }
+    .btn-action-edit { color: var(--av-primary); }
+    .btn-action-edit:hover {
+        background-color: var(--av-primary);
+        color: #FFFFFF;
+        border-color: var(--av-primary);
+    }
+    .btn-action-delete { color: #EF4444; }
+    .btn-action-delete:hover {
+        background-color: #EF4444;
+        color: #FFFFFF;
+        border-color: #EF4444;
+    }
+
+    /* LISTA DE PREGUNTAS */
+    .pregunta-item {
+        background-color: transparent !important;
+        border-bottom: 1px solid var(--av-border) !important;
+        padding: 16px 20px;
+        transition: background-color 0.15s ease;
+    }
+    .pregunta-item:hover {
+        background-color: rgba(24, 105, 179, 0.02) !important;
+    }
+    [data-bs-theme="dark"] .pregunta-item:hover {
+        background-color: rgba(56, 189, 248, 0.03) !important;
+    }
+
+    .pregunta-tag {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--av-text-muted);
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    .pregunta-texto {
+        color: var(--av-text-main);
+        font-size: 0.92rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+
+    /* RESULTADOS POR EMPLEADO */
+    .empleado-card {
+        border-radius: 12px;
+        border: 1px solid var(--av-border);
+        background: var(--av-surface);
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+    .empleado-header {
+        background-color: var(--av-surface);
+        border-bottom: 1px solid var(--av-border);
+        padding: 12px 18px;
+    }
+
+    /* BOTÓN ASIGNAR PRUEBA TAT */
+    .btn-asignar-tat {
+        background-color: var(--av-pill-bg);
+        color: var(--av-primary);
+        border: 1px solid var(--av-border);
+        padding: 5px 11px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .btn-asignar-tat:hover {
+        background-color: var(--av-primary);
+        color: #FFFFFF !important;
+        border-color: var(--av-primary);
+        box-shadow: 0 2px 6px rgba(24, 105, 179, 0.25);
+    }
+
+    /* CAJA DE RESPUESTA */
+    .badge-respuesta {
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        color: var(--av-text-main);
+        font-weight: 500;
+        font-size: 0.86rem;
+        line-height: 1.45;
+        border-radius: 6px;
+        padding: 6px 12px;
+        display: inline-block;
+    }
+
+    /* MODALES INSTITUCIONALES */
+    .modal-avenzo .modal-content {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background-color: var(--av-surface);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    .modal-avenzo .modal-header {
+        border-bottom: 1px solid var(--av-border);
+        padding: 14px 18px;
+    }
+    .modal-avenzo .modal-footer {
+        border-top: 1px solid var(--av-border);
+        padding: 12px 18px;
+    }
+    .modal-avenzo .form-control, .modal-avenzo .form-select {
+        background-color: var(--av-pill-bg);
+        border-color: var(--av-border);
+        color: var(--av-text-main);
+        border-radius: 8px;
+        font-size: 0.88rem;
+    }
+    .modal-avenzo .form-control:focus, .modal-avenzo .form-select:focus {
+        border-color: var(--av-primary);
+        box-shadow: 0 0 0 2px rgba(24, 105, 179, 0.15);
+    }
+
+    .btn-modal-cancel {
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        color: var(--av-text-muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 7px 16px;
+        transition: all 0.2s ease;
+    }
+    .btn-modal-cancel:hover {
+        background-color: var(--av-surface);
+        border-color: var(--av-text-disabled);
+        color: var(--av-text-main);
+    }
+
+    .btn-modal-confirm {
+        background-color: var(--av-primary);
+        border: 1px solid var(--av-primary);
+        color: #FFFFFF;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 6px;
+        padding: 7px 16px;
+        transition: all 0.2s ease;
+    }
+    .btn-modal-confirm:hover {
+        opacity: 0.92;
+        color: #FFFFFF;
+    }
+</style>
+
+<div class="container-fluid p-0">
+    <!-- 1. TARJETA SUPERIOR: METADATOS Y ACCIONES DE PUBLICACIÓN -->
+    <div class="card encuesta-header-card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center mb-2">
+                        <a href="/Panel/Encuestas" class="btn-nav-back me-3" title="Volver a Encuestas">
+                            <i class="fa-solid fa-arrow-left fa-sm"></i>
+                        </a>
+
+                        <div class="icon-header-badge me-2">
+                            <i class="fa-solid fa-sliders"></i>
+                        </div>
+
+                        <h4 class="empresa-title mb-0">
+                            @(Model.Empresa?.NombreEmpresa ?? "Empresa No Asignada")
+                        </h4>
+                    </div>
+                    
+                    <div class="d-flex flex-wrap gap-4 mt-3 ps-1">
+                        <div class="meta-item">
+                            <i class="fa-solid fa-users fa-sm text-secondary"></i> 
+                            <span><strong>Límite:</strong> @Model.LimiteEmpleados empleados</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fa-regular fa-calendar fa-sm text-secondary"></i> 
+                            <span><strong>Cierre:</strong> @(Model.FechaCierre.Year == 1 ? "No definida" : Model.FechaCierre.ToString("dd/MMM/yyyy"))</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fa-solid fa-circle-info fa-sm text-secondary"></i> 
+                            <span class="me-1"><strong>Estatus:</strong></span>
+                            @if (estaCerrada)
+                            {
+                                <span class="status-badge finished">
+                                    <span class="dot"></span>
+                                    <span>Finalizada / Cerrada</span>
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-badge in-progress">
+                                    <span class="dot"></span>
+                                    <span>Activa / En Curso</span>
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón Publicar -->
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <button type="button" class="btn-publicar-whatsapp" 
+                            id="btnAbrirModalPublicar" 
+                            onclick="abrirModalPublicacion()">
+                        <i class="fa-brands fa-whatsapp fa-lg"></i>
+                        <span>Publicar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <!-- 2. NAVEGACIÓN POR PESTAÑAS (PREGUNTAS VS RESULTADOS) -->
+    <ul class="nav nav-tabs nav-tabs-avenzo mb-4" id="encuestaTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="preguntas-tab" data-bs-toggle="tab" data-bs-target="#preguntas" type="button" role="tab">
+                <i class="fa-solid fa-list-ol me-2"></i>Preguntas para la encuesta
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link d-inline-flex align-items-center" id="resultados-tab" data-bs-toggle="tab" data-bs-target="#resultados" type="button" role="tab">
+                <i class="fa-solid fa-users me-2"></i>
+                <span>Resultados por Empleado</span>
+                @if (totalParticipantes > 0)
+                {
+                    <span class="badge ms-2" style="background-color: var(--av-pill-bg); color: var(--av-primary); border: 1px solid var(--av-border); font-size: 0.72rem; font-weight: 600;">
+                        @totalParticipantes evaluados
+                    </span>
+                }
+            </button>
+        </li>
+    </ul>
+
+    <!-- CONTENIDO DE PESTAÑAS -->
+    <div class="tab-content" id="encuestaTabContent">
+        <!-- PESTAÑA 1: PREGUNTAS -->
+        <div class="tab-pane fade show active" id="preguntas" role="tabpanel">
+            <div class="card section-card shadow-sm border-0 mb-5">
+                <div class="section-card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold" style="color: var(--av-primary); font-size: 0.92rem;">
+                        <i class="fa-solid fa-sliders me-1"></i> Configuración de Preguntas
+                    </span>
+                    
+                    <button class="btn btn-add-manual" data-bs-toggle="modal" data-bs-target="#modalAgregarPregunta">
+                        <i class="fa-solid fa-plus"></i> Añadir manual
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush mb-0">
+                        @if (preguntas != null && preguntas.Any())
+                        {
+                            int index = 1;
+                            foreach (var p in preguntas)
+                            {
+                                <li class="list-group-item pregunta-item" id="fila-pregunta-@p.PreguntaID">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="me-auto w-100 pe-3">
+                                            <div class="pregunta-tag">
+                                                Pregunta @index
+                                            </div>
+                                            
+                                            <div id="texto-@p.PreguntaID" class="pregunta-texto">@p.TextoPregunta</div>
+                                            
+                                            <div id="edit-box-@p.PreguntaID" class="d-none mt-3 p-3 rounded-3" style="background-color: var(--av-pill-bg); border: 1px solid var(--av-border);">
+                                                <label class="form-label small text-secondary fw-semibold mb-2">Modificar contenido de la pregunta:</label>
+                                                <textarea class="form-control mb-3" id="input-@p.PreguntaID" rows="2" style="background-color: var(--av-surface); border-color: var(--av-border); color: var(--av-text-main); font-size: 0.88rem;">@p.TextoPregunta</textarea>
+                                                <div class="d-flex justify-content-end gap-2">
+                                                    <button class="btn btn-sm btn-modal-cancel" onclick="cancelarEdicion(@p.PreguntaID)">Cancelar</button>
+                                                    <button class="btn btn-sm btn-modal-confirm" onclick="guardarEdicion(@p.PreguntaID)">
+                                                        <i class="fa-solid fa-floppy-disk me-1"></i> Guardar Cambios
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2 ms-2 pt-1" id="actions-@p.PreguntaID">
+                                            <button class="btn-action-icon btn-action-edit" title="Editar pregunta" onclick="mostrarEdicion(@p.PreguntaID)">
+                                                <i class="fa-solid fa-pen-to-square fa-xs"></i>
+                                            </button>
+                                            <button class="btn-action-icon btn-action-delete" title="Eliminar pregunta" onclick="abrirModalEliminarPregunta(@p.PreguntaID)">
+                                                <i class="fa-regular fa-trash-can fa-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </li>
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <li class="list-group-item p-5 text-center text-muted">
+                                <i class="fa-solid fa-circle-question fa-3x mb-3 text-secondary opacity-50"></i><br />
+                                No se encontraron preguntas configuradas para esta encuesta.
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 2: RESULTADOS POR EMPLEADO -->
+        <div class="tab-pane fade" id="resultados" role="tabpanel">
+            @if (respuestasAgrupadas != null && respuestasAgrupadas.Any())
+            {
+                int contadorEmpleado = 1;
+                foreach (var empleado in respuestasAgrupadas)
+                {
+                    string telefonoOculto = empleado.Key.Length > 4 ? "****" + empleado.Key.Substring(empleado.Key.Length - 4) : empleado.Key;
+                    var primeraRespuesta = Enumerable.First(empleado);
+
+                    <div class="card empleado-card shadow-sm border-0">
+                        <div class="empleado-header d-flex flex-wrap justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="icon-header-badge" style="width: 34px; height: 34px;">
+                                    <i class="fa-regular fa-user"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold d-inline-block me-2" style="color: var(--av-text-main); font-size: 0.92rem;">
+                                        Empleado #@contadorEmpleado
+                                    </h6>
+                                    <span class="badge" style="background-color: var(--av-pill-bg); color: var(--av-text-muted); border: 1px solid var(--av-border); font-weight: 500; font-size: 0.75rem;">
+                                        Tel: @telefonoOculto
+                                    </span>
+                                    <span class="text-secondary small ms-2">
+                                        <i class="fa-regular fa-clock me-1"></i>Última respuesta: @primeraRespuesta.FechaRespuesta.ToString("dd/MM/yyyy HH:mm")
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-asignar-tat mt-2 mt-md-0" 
+                                    onclick="abrirModalAsignarTAT('@empleado.Key', @Model.EncuestaID)">
+                                <i class="fa-solid fa-brain fa-xs"></i>
+                                <span>Asignar Prueba TAT</span>
+                            </button>
+                        </div>
+                        
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0" style="font-size: 0.86rem;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 55%; padding-left: 20px; background-color: var(--av-pill-bg); border-bottom: 1px solid var(--av-border); color: var(--av-text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;" class="py-2">
+                                                Pregunta
+                                            </th>
+                                            <th style="width: 45%; padding-right: 20px; background-color: var(--av-pill-bg); border-bottom: 1px solid var(--av-border); color: var(--av-text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;" class="py-2">
+                                                Respuesta del Empleado
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var resp in empleado)
+                                        {
+                                            <tr style="border-bottom: 1px solid var(--av-border);">
+                                                <td style="padding-left: 20px; color: var(--av-text-main);" class="py-3">
+                                                    @resp.TextoPregunta
+                                                </td>
+                                                <td style="padding-right: 20px;" class="py-3">
+                                                    <span class="badge-respuesta">
+                                                        @resp.TextoRespuesta
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    contadorEmpleado++;
+                }
+            }
+            else
+            {
+                <div class="card section-card shadow-sm border-0 p-5 text-center text-muted">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="icon-header-badge mb-2" style="width: 44px; height: 44px;">
+                            <i class="fa-solid fa-inbox fa-lg"></i>
+                        </div>
+                        <span class="fw-medium">Aún no hay respuestas registradas de empleados para esta encuesta.</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- 1. MODAL: CONFIRMACIÓN PARA PUBLICAR ENCUESTA -->
+<div class="modal fade modal-avenzo" id="modalPublicarConfirm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                     style="background-color: rgba(16, 185, 129, 0.12); width: 56px; height: 56px;">
+                    <i class="fa-brands fa-whatsapp fa-2x" style="color: #10B981;"></i>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: var(--av-text-main);">¿Publicar esta encuesta?</h5>
+                <p class="text-secondary small mb-4" style="line-height: 1.5;">
+                    Al confirmar, la encuesta quedará activa para recibir respuestas y se notificará automáticamente con el enlace oficial de acceso.
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-modal-cancel px-3" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-publicar-whatsapp px-3 py-2" 
+                            id="btnEjecutarPublicacion" 
+                            onclick="ejecutarPublicacion(@Model.EncuestaID)">
+                        <i class="fa-solid fa-check me-1"></i> Sí, publicar ahora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. MODAL: ALTA MANUAL DE NUEVA PREGUNTA -->
+<div class="modal fade modal-avenzo" id="modalAgregarPregunta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="icon-header-badge" style="width: 32px; height: 32px;">
+                        <i class="fa-solid fa-plus fa-sm"></i>
+                    </div>
+                    <h6 class="modal-title fw-bold mb-0" style="color: var(--av-text-main);">Añadir Pregunta</h6>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-secondary">Tipo de pregunta</label>
+                    <select class="form-select" id="selectTipoPregunta" onchange="toggleOpciones()">
+                        <option value="abierta">Pregunta Abierta (Texto)</option>
+                        <option value="opciones">Opción Múltiple</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-secondary">Planteamiento de la pregunta</label>
+                    <textarea class="form-control" id="txtNuevaPregunta" rows="3" placeholder="Ej. ¿Cómo calificarías el clima laboral de tu departamento?"></textarea>
+                </div>
+
+                <div id="seccionOpciones" class="d-none p-3 rounded-3 mb-2" style="background-color: var(--av-pill-bg); border: 1px solid var(--av-border);">
+                    <label class="form-label fw-semibold small text-secondary">Opciones de respuesta</label>
+                    <div class="input-group mb-2">
+                        <input type="text" id="txtNuevaOpcion" class="form-control form-control-sm" placeholder="Escribe una opción">
+                        <button class="btn btn-sm btn-modal-confirm" type="button" onclick="agregarOpcionLista()">Agregar</button>
+                    </div>
+                    <ul class="list-group list-group-sm mb-0" id="listaOpcionesVisual"></ul>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btnGuardarNueva" class="btn btn-modal-confirm" onclick="guardarPreguntaNueva(@Model.EncuestaID)">
+                    <i class="fa-solid fa-check me-1"></i> Guardar Pregunta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. MODAL: CONFIRMACIÓN PARA ASIGNAR PRUEBA TAT-->
+<div class="modal fade modal-avenzo" id="modalAsignarTATConfirm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                     style="background-color: rgba(24, 105, 179, 0.12); width: 56px; height: 56px;">
+                    <i class="fa-solid fa-brain fa-xl" style="color: var(--av-primary);"></i>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: var(--av-text-main);">¿Asignar Prueba TAT?</h5>
+                <p class="text-secondary small mb-4" style="line-height: 1.5;">
+                    Se enviará automáticamente el enlace con la invitación a la <strong>Prueba TAT</strong> directamente al WhatsApp del empleado y se vinculará a tu cuenta como evaluador.
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-modal-cancel px-3" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-modal-confirm px-3 py-2" 
+                            id="btnConfirmarTAT" 
+                            onclick="confirmarAsignacionTAT()">
+                        <i class="fa-solid fa-check me-1"></i> Aceptar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. MODAL: CONFIRMACIÓN PARA ELIMINAR PREGUNTA-->
+<div class="modal fade modal-avenzo" id="modalEliminarPreguntaConfirm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-body p-4 text-center">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                     style="background-color: rgba(239, 68, 68, 0.12); width: 52px; height: 52px;">
+                    <i class="fa-solid fa-trash-can fa-lg" style="color: #EF4444;"></i>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: var(--av-text-main);">¿Eliminar esta pregunta?</h5>
+                <p class="text-secondary small mb-4" style="line-height: 1.5;">
+                    Esta acción removerá permanentemente la pregunta de la estructura de la encuesta.
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-modal-cancel px-3" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger px-3 py-2 fw-medium shadow-sm" 
+                            id="btnConfirmarEliminarPregunta" 
+                            style="border-radius: 6px; font-size: 0.82rem;" 
+                            onclick="confirmarEliminarPregunta()">
+                        <i class="fa-solid fa-trash-can me-1"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NOTIFICADOR TOAST PARA RETROALIMENTACIÓN DE ACCIONES -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+    <div id="appToast" class="toast align-items-center text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 10px;">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="appToastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let opcionesMultiples = [];
+    let preguntaIdAEliminar = 0;
+    let tatTelefonoSeleccionado = '';
+    let tatEncuestaIdSeleccionada = 0;
+
+    function mostrarNotificacion(mensaje, tipo = 'success') {
+        const toastEl = document.getElementById('appToast');
+        const toastMsg = document.getElementById('appToastMessage');
+        
+        toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-dark', 'text-white');
+        
+        if (tipo === 'success') {
+            toastEl.style.backgroundColor = '#059669';
+            toastEl.classList.add('text-white');
+            toastMsg.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> ${mensaje}`;
+        } else if (tipo === 'error') {
+            toastEl.style.backgroundColor = '#DC2626';
+            toastEl.classList.add('text-white');
+            toastMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation me-2"></i> ${mensaje}`;
+        } else {
+            toastEl.style.backgroundColor = '#D97706';
+            toastEl.classList.add('text-white');
+            toastMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i> ${mensaje}`;
+        }
+
+        const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+        toast.show();
+    }
+
+    function abrirModalPublicacion() {
+        const modal = new bootstrap.Modal(document.getElementById('modalPublicarConfirm'));
+        modal.show();
+    }
+
+    async function ejecutarPublicacion(encuestaId) {
+        const btn = document.getElementById('btnEjecutarPublicacion');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Publicando...';
+
+        try {
+            const response = await fetch(`/api/Encuestas/${encuestaId}/publicar`, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                const modalEl = document.getElementById('modalPublicarConfirm');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+
+                mostrarNotificacion("¡Encuesta publicada y notificada exitosamente!", "success");
+                setTimeout(() => {
+                    window.location.href = '/Panel/Encuestas';
+                }, 1500);
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Sí, publicar ahora';
+                const errText = await response.text();
+                mostrarNotificacion("Error al publicar: " + errText, "error");
+            }
+        } catch (err) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Sí, publicar ahora';
+            mostrarNotificacion("No se pudo conectar con el servidor.", "error");
+        }
+    }
+
+    function toggleOpciones() {
+        const tipo = document.getElementById("selectTipoPregunta").value;
+        const seccion = document.getElementById("seccionOpciones");
+        if(tipo === "opciones") {
+            seccion.classList.remove('d-none');
+        } else {
+            seccion.classList.add('d-none');
+            opcionesMultiples = []; 
+            actualizarListaVisual();
+        }
+    }
+
+    function agregarOpcionLista() {
+        const input = document.getElementById("txtNuevaOpcion");
+        const valor = input.value.trim();
+        if(valor !== "") {
+            opcionesMultiples.push(valor);
+            input.value = ""; 
+            actualizarListaVisual();
+        }
+    }
+
+    /* GESTIÓN DE ELIMINACIÓN DE PREGUNTA */
+    function eliminarOpcionLista(index) {
+        opcionesMultiples.splice(index, 1);
+        actualizarListaVisual();
+    }
+
+    function actualizarListaVisual() {
+        const ul = document.getElementById("listaOpcionesVisual");
+        ul.innerHTML = "";
+        opcionesMultiples.forEach((opcion, index) => {
+            ul.innerHTML += `
+                <li class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 small mb-1 rounded" style="background-color: var(--av-surface); border: 1px solid var(--av-border); color: var(--av-text-main);">
+                    <span>${index + 1}. ${opcion}</span>
+                    <button class="btn btn-sm text-danger p-0" onclick="eliminarOpcionLista(${index})"><i class="fa-solid fa-xmark"></i></button>
+                </li>
+            `;
+        });
+    }
+
+    async function guardarPreguntaNueva(encuestaId) {
+        let textoFinal = document.getElementById("txtNuevaPregunta").value.trim();
+        const tipo = document.getElementById("selectTipoPregunta").value;
+
+        if(textoFinal === "") {
+            mostrarNotificacion("Debes redactar el texto de la pregunta.", "warning");
+            return;
+        }
+
+        if(tipo === "opciones" && opcionesMultiples.length > 0) {
+            const opcionesString = opcionesMultiples.map((opt, i) => `${i + 1}. ${opt}`).join(", ");
+            textoFinal += ` [${opcionesString}]`;
+        }
+
+        const payload = {
+            encuestaID: parseInt(encuestaId, 10),
+            textoPregunta: textoFinal
+        };
+
+        const btn = document.getElementById("btnGuardarNueva");
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`/api/Preguntas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload) 
+            });
+
+            if(response.ok) {
+                const modalEl = document.getElementById('modalAgregarPregunta');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+
+                mostrarNotificacion("Pregunta añadida correctamente.", "success");
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                btn.disabled = false;
+                const err = await response.text();
+                mostrarNotificacion("Error al guardar: " + err, "error");
+            }
+        } catch(err) {
+            btn.disabled = false;
+            mostrarNotificacion("No se pudo conectar con el servidor.", "error");
+        }
+    }
+
+    function mostrarEdicion(id) {
+        document.getElementById(`texto-${id}`).classList.add('d-none');
+        document.getElementById(`edit-box-${id}`).classList.remove('d-none');
+        document.getElementById(`actions-${id}`).classList.add('d-none');
+    }
+
+    function cancelarEdicion(id) {
+        document.getElementById(`texto-${id}`).classList.remove('d-none');
+        document.getElementById(`edit-box-${id}`).classList.add('d-none');
+        document.getElementById(`actions-${id}`).classList.remove('d-none');
+    }
+
+    async function guardarEdicion(preguntaId) {
+        const nuevoTexto = document.getElementById(`input-${preguntaId}`).value.trim();
+        
+        if (nuevoTexto === "") {
+            mostrarNotificacion("El texto de la pregunta no puede estar vacío.", "warning");
+            return;
+        }
+
+        const payload = { nuevoTexto: nuevoTexto };
+
+        try {
+            const response = await fetch(`/api/Preguntas/${preguntaId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload) 
+            });
+
+            if(response.ok) {
+                document.getElementById(`texto-${preguntaId}`).innerText = nuevoTexto;
+                cancelarEdicion(preguntaId);
+                mostrarNotificacion("Pregunta actualizada exitosamente.", "success");
+            } else {
+                mostrarNotificacion("Error al guardar cambios de la pregunta.", "error");
+            }
+        } catch(err) {
+            mostrarNotificacion("No se pudo conectar con el servidor.", "error");
+        }
+    }
+
+    /* GESTIÓN DE ELIMINAR PREGUNTA CON MODAL */
+    function abrirModalEliminarPregunta(id) {
+        preguntaIdAEliminar = id;
+        const modal = new bootstrap.Modal(document.getElementById('modalEliminarPreguntaConfirm'));
+        modal.show();
+    }
+
+    async function confirmarEliminarPregunta() {
+        const btn = document.getElementById('btnConfirmarEliminarPregunta');
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`/api/Preguntas/${preguntaIdAEliminar}`, { method: 'DELETE' });
+            if(res.ok) {
+                const modalEl = document.getElementById('modalEliminarPreguntaConfirm');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+
+                const fila = document.getElementById(`fila-pregunta-${preguntaIdAEliminar}`);
+                if (fila) fila.style.display = 'none';
+                mostrarNotificacion("Pregunta eliminada permanentemente.", "success");
+            } else {
+                mostrarNotificacion("No se pudo eliminar la pregunta.", "error");
+            }
+        } catch(err) {
+            mostrarNotificacion("Error de conexión al eliminar.", "error");
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    /* GESTIÓN DE ASIGNAR PRUEBA TAT CON ENVÍO DIRECTO POR WHATSAPP */
+    function abrirModalAsignarTAT(numeroTelefono, encuestaId) {
+        tatTelefonoSeleccionado = numeroTelefono;
+        tatEncuestaIdSeleccionada = encuestaId;
+        const modal = new bootstrap.Modal(document.getElementById('modalAsignarTATConfirm'));
+        modal.show();
+    }
+
+    async function confirmarAsignacionTAT() {
+        const btn = document.getElementById('btnConfirmarTAT');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Enviando WhatsApp...';
+
+        try {
+            const response = await fetch('/api/PruebaTAT/asignar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    telefono: tatTelefonoSeleccionado, 
+                    encuestaId: parseInt(tatEncuestaIdSeleccionada, 10) 
+                })
+            });
+
+            const modalEl = document.getElementById('modalAsignarTATConfirm');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            if (response.ok) {
+                mostrarNotificacion("✅ ¡Invitación enviada exitosamente al WhatsApp del empleado!", "success");
+            } else {
+                const errText = await response.text();
+                mostrarNotificacion("Problema al asignar: " + errText, "error");
+            }
+        } catch (error) {
+            mostrarNotificacion("Error de conexión al asignar la prueba.", "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Aceptar';
+        }
+    }
+</script>
+}

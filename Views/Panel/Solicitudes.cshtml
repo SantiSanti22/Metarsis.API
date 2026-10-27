@@ -1,0 +1,630 @@
+﻿@model IEnumerable<Metarsis.Api.Models.SolicitudEncuesta>
+@{
+    ViewData["Title"] = "Solicitudes Pendientes";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* ENCABEZADOS DE PÁGINA */
+    .page-header-title {
+        color: #0B72B9;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+
+    [data-bs-theme="dark"] .page-header-title {
+        color: #38BDF8 !important;
+    }
+
+    .page-header-sub {
+        color: #64748B;
+        font-size: 0.88rem;
+    }
+
+    [data-bs-theme="dark"] .page-header-sub {
+        color: #94A3B8 !important;
+    }
+
+    /* CONTENEDOR DE TABLA */
+    .solicitudes-card {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background: var(--av-surface);
+        overflow: hidden;
+    }
+
+    /* ENCABEZADOS DE TABLA */
+    .solicitudes-table thead tr th {
+        background-color: var(--av-pill-bg) !important;
+        border-bottom: 1px solid var(--av-border) !important;
+        color: var(--av-text-muted) !important;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 10px;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .solicitudes-table tbody tr {
+        border-bottom: 1px solid var(--av-border);
+        transition: background-color 0.15s ease;
+    }
+
+        .solicitudes-table tbody tr:hover {
+            background-color: rgba(24, 105, 179, 0.02);
+        }
+
+    [data-bs-theme="dark"] .solicitudes-table tbody tr:hover {
+        background-color: rgba(56, 189, 248, 0.03);
+    }
+
+    .solicitudes-table tbody tr td {
+        padding: 12px 10px;
+        font-size: 0.86rem;
+    }
+
+    /* BADGE ID */
+    .badge-solicitud-id {
+        background-color: var(--av-pill-bg);
+        color: var(--av-text-muted);
+        border: 1px solid var(--av-border);
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 3px 6px;
+    }
+
+    /* BOTONES DE ACCIÓN COMPACTOS */
+    .btn-action-group {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .btn-tbl-ver {
+        background-color: var(--av-pill-bg);
+        color: var(--av-primary);
+        border: 1px solid var(--av-border);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+        .btn-tbl-ver:hover {
+            background-color: var(--av-primary);
+            color: #FFFFFF !important;
+            border-color: var(--av-primary);
+        }
+
+    .btn-tbl-aprobar {
+        background-color: #10B981;
+        color: #FFFFFF;
+        border: 1px solid #10B981;
+        padding: 4px 9px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+        .btn-tbl-aprobar:hover {
+            background-color: #059669;
+            border-color: #059669;
+            color: #FFFFFF;
+        }
+
+    .btn-tbl-rechazar {
+        background-color: transparent;
+        color: #EF4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+        .btn-tbl-rechazar:hover {
+            background-color: rgba(239, 68, 68, 0.08);
+            color: #DC2626;
+            border-color: #EF4444;
+        }
+
+    [data-bs-theme="dark"] .btn-tbl-rechazar {
+        background-color: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #F87171;
+    }
+
+        [data-bs-theme="dark"] .btn-tbl-rechazar:hover {
+            background-color: #DC2626;
+            color: #FFFFFF;
+            border-color: #DC2626;
+        }
+
+    /* ESTILOS DE LOS MODALES */
+    .modal-avenzo .modal-content {
+        border-radius: 14px;
+        border: 1px solid var(--av-border);
+        background-color: var(--av-surface);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-avenzo .modal-header {
+        border-bottom: 1px solid var(--av-border);
+        padding: 14px 18px;
+    }
+
+    .modal-avenzo .modal-footer {
+        border-top: 1px solid var(--av-border);
+        padding: 12px 18px;
+    }
+
+    .ficha-box {
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        height: 100%;
+    }
+
+    .ficha-label {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--av-text-muted);
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+
+    .ficha-val {
+        color: var(--av-text-main);
+        font-weight: 500;
+        font-size: 0.88rem;
+    }
+
+    .box-problematica {
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        color: var(--av-text-main);
+        font-size: 0.88rem;
+        line-height: 1.5;
+        border-radius: 8px;
+        padding: 12px;
+        max-height: 180px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+    }
+
+    .textarea-motivo {
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        color: var(--av-text-main);
+        font-size: 0.86rem;
+        border-radius: 8px;
+        resize: none;
+    }
+
+        .textarea-motivo:focus {
+            background-color: var(--av-pill-bg);
+            border-color: var(--av-primary);
+            color: var(--av-text-main);
+            box-shadow: 0 0 0 2px rgba(24, 105, 179, 0.15);
+        }
+
+    .btn-modal-cancel {
+        background-color: var(--av-pill-bg);
+        border: 1px solid var(--av-border);
+        color: var(--av-text-muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 7px 16px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-modal-cancel:hover {
+            background-color: var(--av-surface);
+            border-color: var(--av-text-disabled);
+            color: var(--av-text-main);
+        }
+</style>
+
+<div class="container-fluid p-0">
+    <div class="mb-4">
+        <h4 class="page-header-title mb-1">
+            <i class="fa-solid fa-inbox me-2"></i>Bandeja de Solicitudes Pendientes
+        </h4>
+        <p class="page-header-sub mb-0">Revisa las solicitudes recibidas por WhatsApp y aprueba para estructurar la encuesta con IA o rechaza.</p>
+    </div>
+
+    <!-- TABLA PRINCIPAL DE SOLICITUDES EN ESTADO PENDIENTE -->
+    <div class="card solicitudes-card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive" style="overflow-x: hidden;">
+                <table class="table solicitudes-table align-middle mb-0 w-100">
+                    <thead>
+                        <tr>
+                            <th class="text-center ps-3" style="width: 5%;">ID</th>
+                            <th class="text-start" style="width: 14%;">Empresa</th>
+                            <th class="text-start" style="width: 15%;">Representante</th>
+                            <th class="text-center" style="width: 12%;">Teléfono</th>
+                            <th class="text-center" style="width: 8%;">Empleados</th>
+                            <th class="text-center" style="width: 8%;">Duración</th>
+                            <th class="text-start" style="width: 18%;">Problemática</th>
+                            <th class="text-end pe-3" style="width: 20%;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var solicitud in Model)
+                            {
+                                string problematicaTexto = solicitud.Problematica ?? "";
+
+                                <tr>
+                                    <!-- ID -->
+                                    <td class="text-center ps-3">
+                                        <span class="badge-solicitud-id">
+                                            #@solicitud.SolicitudID
+                                        </span>
+                                    </td>
+
+                                    <!-- Empresa: sin negritas exageradas -->
+                                    <td class="text-start" style="color: var(--av-text-main);">
+                                        @(solicitud.Empresa?.NombreEmpresa ?? "N/A")
+                                    </td>
+
+                                    <!-- Representante -->
+                                    <td class="text-start text-secondary">
+                                        @(solicitud.Empresa?.NombreContacto ?? "N/A")
+                                    </td>
+
+                                    <!-- Teléfono -->
+                                    <td class="text-center text-secondary font-monospace" style="font-size: 0.8rem;">
+                                        @(solicitud.Empresa?.TelefonoContacto ?? "N/A")
+                                    </td>
+
+                                    <!-- Empleados: peso regular y homogéneo -->
+                                    <td class="text-center text-secondary">
+                                        @solicitud.NumeroEmpleados
+                                    </td>
+
+                                    <!-- Duración -->
+                                    <td class="text-center text-secondary">
+                                        @(solicitud.DiasEstimados > 0 ? $"{solicitud.DiasEstimados} días" : "Sin definir")
+                                    </td>
+
+                                    <!-- Problemática -->
+                                    <td class="text-start text-secondary" style="max-width: 160px;">
+                                        <span class="d-inline-block text-truncate w-100" title="@problematicaTexto">
+                                            @(string.IsNullOrWhiteSpace(problematicaTexto) ? "Sin descripción" : problematicaTexto)
+                                        </span>
+                                        <div id="full-problem-@solicitud.SolicitudID" class="d-none">@solicitud.Problematica</div>
+                                    </td>
+
+                                    <!-- Acciones en una sola línea -->
+                                    <td class="text-end pe-3">
+                                        <div class="btn-action-group">
+                                            <button type="button"
+                                                    class="btn-tbl-ver"
+                                                    title="Ver solicitud completa"
+                                                    onclick="abrirModalFichaCompleta('@solicitud.SolicitudID',
+                                                '@(solicitud.Empresa?.NombreEmpresa ?? "N/A")',
+                                                '@(solicitud.Empresa?.NombreContacto ?? "N/A")',
+                                                '@(solicitud.Empresa?.TelefonoContacto ?? "N/A")',
+                                                '@solicitud.NumeroEmpleados',
+                                                '@(solicitud.DiasEstimados > 0 ? $"{solicitud.DiasEstimados} días" : "Sin definir")')">
+                                                <i class="fa-regular fa-eye"></i>
+                                                <span>Ver</span>
+                                            </button>
+
+                                            <button type="button"
+                                                    onclick="abrirModalAprobar(@solicitud.SolicitudID)"
+                                                    class="btn-tbl-aprobar"
+                                                    id="btn-aprobar-@solicitud.SolicitudID"
+                                                    title="Aprobar Solicitud">
+                                                <i class="fa-solid fa-check"></i>
+                                                <span>Aprobar</span>
+                                            </button>
+
+                                            <button type="button"
+                                                    onclick="abrirModalRechazar(@solicitud.SolicitudID)"
+                                                    class="btn-tbl-rechazar"
+                                                    id="btn-rechazar-@solicitud.SolicitudID"
+                                                    title="Rechazar Solicitud">
+                                                <i class="fa-solid fa-xmark"></i>
+                                                <span>Rechazar</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block opacity-50"></i>
+                                    No hay solicitudes pendientes en este momento.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 1. MODAL: FICHA TÉCNICA Y DIAGNÓSTICO DETALLADO-->
+<div class="modal fade modal-avenzo" id="modalFichaSolicitud" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="background-color: rgba(24, 105, 179, 0.12); width: 32px; height: 32px;">
+                        <i class="fa-solid fa-file-lines" style="color: var(--av-primary); font-size: 0.85rem;"></i>
+                    </div>
+                    <h6 class="modal-title fw-bold mb-0" style="color: var(--av-text-main);">Detalle de la Solicitud</h6>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-3">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <div class="ficha-box">
+                            <div class="ficha-label">Empresa Solicitante</div>
+                            <!-- Color homogéneo neutro sin resaltar en azul -->
+                            <div class="ficha-val" id="fichaEmpresa"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="ficha-box">
+                            <div class="ficha-label">Representante</div>
+                            <div class="ficha-val" id="fichaRepresentante"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="ficha-box">
+                            <div class="ficha-label">Teléfono WhatsApp</div>
+                            <div class="ficha-val font-monospace" id="fichaTelefono"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="ficha-box">
+                            <div class="ficha-label">Empleados a Evaluar</div>
+                            <div class="ficha-val" id="fichaEmpleados"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="ficha-box">
+                            <div class="ficha-label">Duración Estimada</div>
+                            <div class="ficha-val" id="fichaDuracion"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="ficha-label mb-2">Problemática Declarada vía WhatsApp</div>
+                    <div class="box-problematica" id="fichaProblematica"></div>
+                </div>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">Cerrar</button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-tbl-rechazar" onclick="pasarARechazarDesdeFicha()">
+                        <i class="fa-solid fa-xmark me-1"></i> Rechazar
+                    </button>
+                    <button type="button" class="btn btn-tbl-aprobar" onclick="pasarAAprobarDesdeFicha()">
+                        <i class="fa-solid fa-check me-1"></i> Aprobar Solicitud
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. MODAL: APROBAR Y DETONAR GENERACIÓN CON OPENAI-->
+<div class="modal fade modal-avenzo" id="modalAprobarConfirm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-body p-4 text-center">
+                <!-- Icono corporativo sobrio -->
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                     style="background-color: rgba(16, 185, 129, 0.12); width: 56px; height: 56px;">
+                    <i class="fa-solid fa-clipboard-check fa-xl" style="color: #10B981;"></i>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: var(--av-text-main);">¿Aprobar solicitud y generar encuesta?</h5>
+                <p class="text-secondary small mb-4" style="line-height: 1.5;">
+                    Se utilizará OpenAI para estructurar las preguntas automáticamente a partir de la problemática declarada y se notificará al cliente por WhatsApp.
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-modal-cancel px-3" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-tbl-aprobar px-3 py-2"
+                            id="btnEjecutarAprobar"
+                            onclick="ejecutarAprobacion()">
+                        <i class="fa-solid fa-check me-1"></i> Sí, generar encuesta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. MODAL: RECHAZO MOTIVADO Y NOTIFICACIÓN POR TWILIO -->
+<div class="modal fade modal-avenzo" id="modalRechazarConfirm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-body p-4">
+                <div class="text-center">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                         style="background-color: rgba(239, 68, 68, 0.12); width: 52px; height: 52px;">
+                        <i class="fa-solid fa-triangle-exclamation fa-lg" style="color: #EF4444;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1" style="color: var(--av-text-main);">¿Rechazar esta solicitud?</h5>
+                    <p class="text-secondary small mb-3">
+                        La solicitud cambiará a estatus rechazada y se le enviará esta retroalimentación por WhatsApp.
+                    </p>
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                        Motivo del rechazo:
+                    </label>
+                    <textarea class="form-control textarea-motivo"
+                              id="txtMotivoRechazo"
+                              rows="3"
+                              placeholder="Describe brevemente la razón..."></textarea>
+                </div>
+
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-modal-cancel px-3" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger px-3 py-2 fw-medium shadow-sm"
+                            id="btnEjecutarRechazar"
+                            style="border-radius: 6px; font-size: 0.82rem;"
+                            onclick="ejecutarRechazo()">
+                        <i class="fa-solid fa-paper-plane me-1"></i> Rechazar y Notificar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let solicitudIdSeleccionada = 0;
+
+        function abrirModalFichaCompleta(id, empresa, representante, telefono, empleados, duracion) {
+            solicitudIdSeleccionada = id;
+
+            document.getElementById('fichaEmpresa').innerText = empresa;
+            document.getElementById('fichaRepresentante').innerText = representante;
+            document.getElementById('fichaTelefono').innerText = telefono;
+            document.getElementById('fichaEmpleados').innerText = `${empleados} personas`;
+            document.getElementById('fichaDuracion').innerText = duracion;
+
+            const fullProblemText = document.getElementById(`full-problem-${id}`).innerText;
+            document.getElementById('fichaProblematica').innerText = fullProblemText;
+
+            const modal = new bootstrap.Modal(document.getElementById('modalFichaSolicitud'));
+            modal.show();
+        }
+
+        function pasarAAprobarDesdeFicha() {
+            const modalFicha = bootstrap.Modal.getInstance(document.getElementById('modalFichaSolicitud'));
+            if (modalFicha) modalFicha.hide();
+            abrirModalAprobar(solicitudIdSeleccionada);
+        }
+
+        function pasarARechazarDesdeFicha() {
+            const modalFicha = bootstrap.Modal.getInstance(document.getElementById('modalFichaSolicitud'));
+            if (modalFicha) modalFicha.hide();
+            abrirModalRechazar(solicitudIdSeleccionada);
+        }
+
+        function abrirModalAprobar(id) {
+            solicitudIdSeleccionada = id;
+            const modal = new bootstrap.Modal(document.getElementById('modalAprobarConfirm'));
+            modal.show();
+        }
+
+        async function ejecutarAprobacion() {
+            const btn = document.getElementById('btnEjecutarAprobar');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Generando...';
+
+            try {
+                const response = await fetch(`/api/Solicitudes/${solicitudIdSeleccionada}/aprobar`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const modalEl = document.getElementById('modalAprobarConfirm');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+
+                    window.location.href = '/Panel/Encuestas';
+                } else {
+                    const error = await response.json();
+                    alert("Error al procesar: " + (error.Mensaje || error.Error || "Ocurrió un error"));
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Sí, generar encuesta';
+                }
+            } catch (e) {
+                alert("Error de conexión al intentar aprobar.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Sí, generar encuesta';
+            }
+        }
+
+        function abrirModalRechazar(id) {
+            solicitudIdSeleccionada = id;
+            document.getElementById('txtMotivoRechazo').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('modalRechazarConfirm'));
+            modal.show();
+        }
+
+        async function ejecutarRechazo() {
+            const btn = document.getElementById('btnEjecutarRechazar');
+            const motivo = document.getElementById('txtMotivoRechazo').value.trim();
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Procesando...';
+
+            try {
+                const response = await fetch(`/api/Solicitudes/${solicitudIdSeleccionada}/rechazar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ motivo: motivo })
+                });
+
+                if (response.ok) {
+                    const modalEl = document.getElementById('modalRechazarConfirm');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+
+                    location.reload();
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    alert("Error al rechazar: " + (err.Mensaje || "Ocurrió un error"));
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i> Rechazar y Notificar';
+                }
+            } catch (e) {
+                alert("Error de conexión al intentar rechazar la solicitud.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i> Rechazar y Notificar';
+            }
+        }
+    </script>
+}
